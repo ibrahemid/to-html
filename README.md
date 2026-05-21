@@ -1,6 +1,6 @@
 # to-html
 
-HTML rendering mode for Claude Code. Toggle with `/to-html` and every assistant response gets written to a self-contained HTML file alongside the regular terminal output. Native plan-mode integration renders a live dashboard for `ExitPlanMode` plans.
+Toggle HTML rendering for Claude Code. `/to-html` flips it on; every reply also writes a self-contained HTML file. Native plan-mode renders a live dashboard.
 
 ## Install
 
@@ -9,20 +9,13 @@ HTML rendering mode for Claude Code. Toggle with `/to-html` and every assistant 
 /plugin install to-html@ibrahemid
 ```
 
-## Commands
+## Use
 
 ```
-/to-html              toggle HTML mode for this project
-/to-html on|off       explicit set
-/to-html status       show current mode
-/to-html reset        clear mode + auto-open preference
-/to-html plan <path>  render a markdown plan file
-/to-html plan status  show active plan
-/to-html plan reset   clear active plan
-/html                 alias of /to-html
+/to-html
 ```
 
-First `/to-html on` asks once whether to auto-open generated files in your default browser. Answer persists for the project.
+Pure toggle: first call enables HTML mode and asks once whether to auto-open generated files in your default browser. Second call disables. State and auto-open preference persist per project across CC restarts.
 
 ## Output
 
@@ -38,11 +31,11 @@ Per-turn responses save as `NNNN-<slug>.html`. Plans save as `plan-<slug>.html` 
 
 ## Plan mode
 
-When HTML mode is on and Claude calls `ExitPlanMode`, the plugin renders the plan with a phase sidebar, status badges (◯ pending · ◐ in-progress · ● done · ✕ failed), progress bars, and a `Copy as markdown` export. As Claude executes the plan, the Stop hook diffs each reply against the task list and flips statuses live.
+When HTML mode is on and Claude calls `ExitPlanMode`, the plan auto-renders with a phase sidebar, status badges (◯ pending · ◐ in-progress · ● done · ✕ failed), progress bars, and a `Copy as markdown` export. The Stop hook then diffs each subsequent reply against the task list and flips statuses live.
 
 Status heuristic (line-scoped):
 
-| Assistant text | Resulting status |
+| Assistant text | Status |
 |---|---|
 | `Inventory schemas: completed ✅` | done |
 | `Move auth: blocked, waiting on legal` | failed |

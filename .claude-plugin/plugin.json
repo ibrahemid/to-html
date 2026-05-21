@@ -1,7 +1,7 @@
 {
   "name": "to-html",
-  "version": "0.2.0",
-  "description": "HTML rendering mode for Claude Code. /to-html toggles per-turn HTML output. Native plan-mode integration renders ExitPlanMode plans with phase sidebar, status badges, and live reload. Interactive controls (sliders, dropdowns, kanban, choice) with copy-as-prompt export. Deterministic Node renderer, strict CSP.",
+  "version": "0.3.0",
+  "description": "Toggle HTML rendering for Claude Code. `/to-html` flips it on; every reply also writes a self-contained HTML file.",
   "author": {
     "name": "ibrahemid",
     "url": "https://github.com/ibrahemid"
