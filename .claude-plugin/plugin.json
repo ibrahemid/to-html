@@ -1,6 +1,6 @@
 {
   "name": "to-html",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Content-aware HTML rendering for Claude Code. `/to-html` toggles it on; every substantive reply is classified and rendered with the right template (plan, comparison, explainer, prose). Trivial replies are skipped.",
   "author": {
     "name": "ibrahemid",

@@ -3,13 +3,24 @@
 
 const fs = require('fs');
 const path = require('path');
-const { readState } = require('../lib/state');
+const crypto = require('crypto');
+const { readState, writeState } = require('../lib/state');
 const { render } = require('./render');
 const { renderPlan } = require('./plan-renderer');
 const { readJsonStdin } = require('../lib/io');
 const { appendEvent } = require('../lib/diag');
 
 const MAX_TRANSCRIPT_LINE_BYTES = 1 * 1024 * 1024;
+const RETRY_DELAY_MS = 600;
+const RETRY_MIN_CHARS = 400;
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function hashText(text) {
+  return crypto.createHash('sha1').update(text).digest('hex').slice(0, 16);
+}
 
 function extractTextFromContent(content) {
   if (typeof content === 'string') return content;
@@ -23,14 +34,12 @@ function extractTextFromContent(content) {
 function findLastAssistantText(transcriptPath) {
   if (!transcriptPath || typeof transcriptPath !== 'string') return { text: null, turnIndex: 0 };
   if (!fs.existsSync(transcriptPath)) return { text: null, turnIndex: 0 };
-
   let raw;
   try {
     raw = fs.readFileSync(transcriptPath, 'utf8');
   } catch (_) {
     return { text: null, turnIndex: 0 };
   }
-
   const lines = raw.split('\n');
   let lastText = null;
   let assistantCount = 0;
@@ -71,6 +80,19 @@ function planToMarkdownStub(plan) {
   return out.join('\n');
 }
 
+async function resolveStableText(transcriptPath) {
+  const first = findLastAssistantText(transcriptPath);
+  const firstLen = first.text ? first.text.length : 0;
+  if (firstLen >= RETRY_MIN_CHARS) {
+    return { ...first, retries: 0, firstLen };
+  }
+  await sleep(RETRY_DELAY_MS);
+  const second = findLastAssistantText(transcriptPath);
+  const secondLen = second.text ? second.text.length : 0;
+  if (secondLen > firstLen) return { ...second, retries: 1, firstLen };
+  return { ...second, retries: 1, firstLen };
+}
+
 async function main() {
   const payload = await readJsonStdin();
   const cwd = (payload && typeof payload.cwd === 'string') ? payload.cwd
@@ -83,9 +105,18 @@ async function main() {
   }
 
   const transcriptPath = payload.transcript_path || payload.transcriptPath || null;
-  const { text, turnIndex } = findLastAssistantText(transcriptPath);
+  const stable = await resolveStableText(transcriptPath);
+  const text = stable.text;
+  const turnIndex = stable.turnIndex;
+
   if (!text || !text.trim()) {
-    appendEvent({ kind: 'stop', mode: 'on', cwd, note: 'no assistant text' });
+    appendEvent({ kind: 'stop', mode: 'on', cwd, note: 'no assistant text', firstLen: stable.firstLen, retries: stable.retries });
+    process.exit(0);
+  }
+
+  const textHash = hashText(text);
+  if (state.lastRenderedTextHash === textHash) {
+    appendEvent({ kind: 'stop', mode: 'on', cwd, note: 'already rendered (same text)', textLen: text.length, retries: stable.retries });
     process.exit(0);
   }
 
@@ -108,13 +139,18 @@ async function main() {
       cwd,
       template: result.template || (result.skipped ? 'skip' : null),
       skipped: !!result.skipped,
-      reason: result.reason
+      reason: result.reason,
+      textLen: text.length,
+      retries: stable.retries
     });
     if (!result.skipped) {
       messages.push(`[to-html · ${result.template}] ${result.url}`);
     }
+    if (!result.skipped) {
+      writeState(cwd, { lastRenderedTextHash: textHash });
+    }
   } catch (err) {
-    appendEvent({ kind: 'stop', mode: 'on', cwd, error: err.message });
+    appendEvent({ kind: 'stop', mode: 'on', cwd, error: err.message, textLen: text.length, retries: stable.retries });
     messages.push(`[to-html] render failed: ${err.message}`);
   }
 

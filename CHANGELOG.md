@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.2
+
+### Fixed
+- **Stop hook reading stale transcript.** CC writes the assistant's final text block to the transcript JSONL *after* firing the `Stop` hook. The hook was reading the file before the final block landed, seeing only the short preface text (or no text), and classifying the whole turn as `trivial` / `skip`. The big response that followed got no artifact. Now: on first read, if the text is under 400 chars, the hook sleeps 600 ms and re-reads once. Stable text drives the render.
+- **Duplicate renders on multi-fire turns.** Each `Stop` event now hashes the latest assistant text and stores the hash in `state.lastRenderedTextHash`. If `Stop` fires again with the same text (which can happen when CC re-fires on subagent boundaries), the second invocation no-ops. Cleanly idempotent.
+- Diag log now records `textLen` and `retries` per event so timing issues are visible at a glance.
+
+### Why
+Symptom: turning HTML mode on in a fresh CC session, asking for a repo overview, getting a substantive multi-section reply — but no `[to-html · ...]` line and no file. `/to-html diag` showed the hook *was* firing, just classifying the wrong content. Root cause was the transcript-flush race, not registration. v1.0.2 fixes the actual bug.
+
 ## v1.0.1
 
 ### Added
