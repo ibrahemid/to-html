@@ -1,6 +1,19 @@
-# to-html
+<h1 align="center">to-html</h1>
 
-Content-aware HTML rendering for Claude Code. `/to-html` flips it on; every substantive reply is classified and rendered in the template that fits the content. Trivial replies are skipped.
+<p align="center">HTML rendering mode for Claude Code. Type <code>/to-html</code> and every substantive reply opens in your browser.</p>
+
+<p align="center">
+  <a href="https://ibrahemid.github.io/plugins/to-html/">Live gallery</a> ·
+  <a href="#install">Install</a> ·
+  <a href="./CHANGELOG.md">Changelog</a>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/hero-dark.png">
+    <img alt="terminal and browser side-by-side after toggling /to-html" src="./docs/screenshots/hero.png" width="900">
+  </picture>
+</p>
 
 ## Install
 
@@ -12,59 +25,66 @@ Content-aware HTML rendering for Claude Code. `/to-html` flips it on; every subs
 ## Use
 
 ```
-/to-html
+/to-html       toggle mode (state persists per project)
+/to-html diag  diagnostics if the hook seems silent
 ```
 
-First call enables HTML mode and asks once whether to auto-open generated files. Second call disables. State and preference persist per project.
+First enable asks once whether to auto-open. Answer persists.
 
 ## Templates
 
-The Stop hook classifies each assistant reply and picks one:
+The Stop hook classifies each reply and picks one. Click any thumbnail for a live interactive example.
 
-| Signal in the reply | Template |
-|---|---|
-| `## Phase N:` headings or `[ ]` task lists | `plan` — phase sidebar, status badges, live reload |
-| `## Option A/B/C` or `## Approach 1/2/3` | `comparison` — side-by-side cards with pros / cons / effort |
-| `TL;DR:` line + multi-section structure | `explainer` — TL;DR pill, sticky TOC, prose body |
-| Anything else with structure | `prose` — minimal editorial typography |
-| Under 240 chars, no structure | *skipped — no artifact* |
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://ibrahemid.github.io/plugins/to-html/#prose"><img src="./docs/screenshots/tpl-prose.png" alt="prose" width="380"></a>
+      <br><sub><b>prose</b> — editorial typography</sub>
+    </td>
+    <td align="center">
+      <a href="https://ibrahemid.github.io/plugins/to-html/#plan"><img src="./docs/screenshots/tpl-plan.png" alt="plan" width="380"></a>
+      <br><sub><b>plan</b> — phase sidebar, live status, focus checkboxes</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://ibrahemid.github.io/plugins/to-html/#comparison"><img src="./docs/screenshots/tpl-comparison.png" alt="comparison" width="380"></a>
+      <br><sub><b>comparison</b> — side-by-side, pros/cons, pick + reason</sub>
+    </td>
+    <td align="center">
+      <a href="https://ibrahemid.github.io/plugins/to-html/#explainer"><img src="./docs/screenshots/tpl-explainer.png" alt="explainer" width="380"></a>
+      <br><sub><b>explainer</b> — TL;DR pill, sticky TOC</sub>
+    </td>
+  </tr>
+</table>
 
-`ExitPlanMode` always renders the `plan` template directly, with a 3-second auto-reload. As Claude executes the plan, the Stop hook diffs each subsequent reply against the task list and flips statuses live.
+Trivial replies (one-liners, status echoes) get no artifact.
 
-## Output
+## How it works
+
+A Stop hook reads the assistant's reply, runs a classifier, dispatches to one of the templates above, and writes a self-contained HTML file outside your project. A second hook on `ExitPlanMode` always renders the plan as a live dashboard that auto-reloads as tasks progress.
+
+The renderer is deterministic Node — Claude never writes raw HTML, so token cost is markdown-cost, not HTML-cost.
 
 ```
-~/Library/Caches/cc-to-html/artifacts/<session-id>/   (macOS)
-~/.cache/cc-to-html/artifacts/<session-id>/           (Linux)
-%LOCALAPPDATA%\cc-to-html\Cache\artifacts\<session-id>\   (Windows)
+~/Library/Caches/cc-to-html/artifacts/<session>/   (macOS)
+~/.cache/cc-to-html/artifacts/<session>/           (Linux)
+%LOCALAPPDATA%\cc-to-html\Cache\artifacts\         (Windows)
 ```
 
-Filenames: `NNNN-<template>-<slug>.html` for per-turn artifacts, `plan-<slug>.html` for plans.
+## Override (optional)
 
-Outside your project. Never written into the repo.
+Force a template by prepending a fenced block to a reply:
 
-## Override (advanced)
-
-Prepend a fenced block to a reply to force a template:
-
-```` 
+````
 ```to-html
 {"template":"comparison","title":"Three approaches"}
 ```
 ````
 
-The block is stripped before rendering. Unknown templates fall back to the classifier.
-
-## Security
-
-- CSP: `default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'`. No network, no remote assets, no forms.
-- Tag/attribute allowlist sanitizer. All `on*` handlers stripped.
-- Link `href` / image `src` validated against safe URL pattern.
-- Claude never writes raw HTML. Markdown is parsed by vendored `marked`; templates render from structured data.
-
 ## Requirements
 
-Node.js 18+. No npm install. `marked` is vendored under `vendor/`.
+Node 18+. No npm install. Tested on 64 cases via `npm test`.
 
 ## License
 
