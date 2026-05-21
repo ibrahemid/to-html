@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.1.0
+
+### Added
+- **`diagram` template.** When a reply contains a fenced ` ```mermaid ` block with `graph TD/LR` syntax, the Stop hook parses it (`lib/diagram-parser.js`), computes a topological layout (`lib/diagram-layout.js`), and renders pure SVG. Hover a node to dim the rest and trace its incoming and outgoing edges. Click to lock the focus; click outside to clear. No mermaid runtime — the diagram ships as plain SVG inside the artifact, fits the existing CSP.
+- **Editorial-grade prose template.** Iowan Old Style with old-style numerals, ochre drop cap on the lead paragraph, Roman-numeral section markers in the left margin, small caps follow-up paragraphs, asterism between sections, ❦ end mark. Estimated reading time in the masthead.
+- Six templates total (was four user-visible): `diagram`, `plan`, `comparison`, `explainer`, `prose`, `skip`.
+
+### Gallery
+- Editorial redesign (Crimson Pro + JetBrains Mono, warm paper/ochre palette).
+- Specimen sheet for to-html with one section per template, real screenshots, "Open live" affordance.
+- Live at https://ibrahemid.github.io/plugins/.
+
 ## v1.0.2
 
 ### Fixed

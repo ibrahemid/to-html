@@ -11,8 +11,8 @@
 </p>
 
 <p align="center">
-  <a href="https://ibrahemid.github.io/plugins/examples/to-html/plan.html">
-    <img src="./docs/screenshots/thumb-plan.png" alt="to-html plan template — phase sidebar with status badges and focus checkboxes" width="900">
+  <a href="https://ibrahemid.github.io/plugins/examples/to-html/diagram.html">
+    <img src="./docs/screenshots/thumb-diagram.png" alt="to-html diagram template — interactive module map with hover-highlight and click-to-focus" width="900">
   </a>
 </p>
 
@@ -34,43 +34,51 @@ First enable asks once whether to auto-open. Answer persists.
 
 ## Templates
 
-The Stop hook classifies each reply and picks one. Click any thumbnail for the live, interactive artifact.
+The Stop hook classifies each reply and picks one. Click any thumbnail to interact with the live artifact.
 
 <table>
   <tr>
-    <td align="center" width="50%">
-      <a href="https://ibrahemid.github.io/plugins/examples/to-html/prose.html">
-        <img src="./docs/screenshots/thumb-prose.png" alt="prose template" width="420">
+    <td align="center" width="33%">
+      <a href="https://ibrahemid.github.io/plugins/examples/to-html/diagram.html">
+        <img src="./docs/screenshots/thumb-diagram.png" alt="diagram template" width="320">
       </a>
-      <br><sub><b>prose</b> — editorial typography for anything substantive without special structure</sub>
+      <br><sub><b>diagram</b> — interactive module map, hover to trace, click to focus</sub>
     </td>
-    <td align="center" width="50%">
+    <td align="center" width="33%">
       <a href="https://ibrahemid.github.io/plugins/examples/to-html/plan.html">
-        <img src="./docs/screenshots/thumb-plan.png" alt="plan template" width="420">
+        <img src="./docs/screenshots/thumb-plan.png" alt="plan template" width="320">
       </a>
-      <br><sub><b>plan</b> — phase sidebar, live status badges, per-task focus checkboxes</sub>
+      <br><sub><b>plan</b> — phase sidebar, live status, focus checkboxes</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://ibrahemid.github.io/plugins/examples/to-html/comparison.html">
+        <img src="./docs/screenshots/thumb-comparison.png" alt="comparison template" width="320">
+      </a>
+      <br><sub><b>comparison</b> — side-by-side, pros/cons, pick + reason</sub>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <a href="https://ibrahemid.github.io/plugins/examples/to-html/comparison.html">
-        <img src="./docs/screenshots/thumb-comparison.png" alt="comparison template" width="420">
-      </a>
-      <br><sub><b>comparison</b> — side-by-side options, pros/cons, pick + reason</sub>
-    </td>
-    <td align="center">
       <a href="https://ibrahemid.github.io/plugins/examples/to-html/explainer.html">
-        <img src="./docs/screenshots/thumb-explainer.png" alt="explainer template" width="420">
+        <img src="./docs/screenshots/thumb-explainer.png" alt="explainer template" width="320">
       </a>
       <br><sub><b>explainer</b> — TL;DR pill, sticky TOC, reading column</sub>
+    </td>
+    <td align="center">
+      <a href="https://ibrahemid.github.io/plugins/examples/to-html/prose.html">
+        <img src="./docs/screenshots/thumb-prose.png" alt="prose template" width="320">
+      </a>
+      <br><sub><b>prose</b> — editorial typography, drop cap, roman-numeral sections</sub>
+    </td>
+    <td align="center" valign="middle">
+      <sub><b>skip</b> — under 240 chars, no headings, no code: no artifact. Terminal stays clean.</sub>
     </td>
   </tr>
 </table>
 
-Trivial replies (one-liners, status echoes — under 240 chars with no structure) skip rendering. No artifact, clean terminal.
-
 | Triggers on | Template |
 |---|---|
+| ` ```mermaid ` block (`graph TD/LR`) | `diagram` |
 | `## Phase N:` headings or 3+ `[ ]` tasks | `plan` |
 | 2+ `## Option / Approach / Variant` headings | `comparison` |
 | `TL;DR:` keyword or multi-section structure | `explainer` |
@@ -81,13 +89,15 @@ Override the classifier from any reply by prepending a fenced block:
 
 ````
 ```to-html
-{"template":"comparison","title":"Three approaches"}
+{"template":"diagram","title":"Auth handshake"}
 ```
 ````
 
 ## How it works
 
-A `Stop` hook reads the assistant's reply, runs a deterministic classifier (no LLM tokens spent on classification or rendering), dispatches to the chosen template, and writes a self-contained HTML file outside your project. A second hook on `ExitPlanMode` always renders the plan as a live dashboard that auto-reloads as tasks progress.
+A `Stop` hook reads the assistant's reply, runs a deterministic classifier (no LLM tokens spent), dispatches to the chosen template, and writes a self-contained HTML file outside your project. A second hook on `ExitPlanMode` always renders the plan as a live dashboard that auto-reloads as tasks progress.
+
+The diagram template parses `mermaid graph TD/LR` syntax, computes a topological layout, and renders pure SVG with hover-highlight and click-to-focus interactivity. No mermaid runtime dependency — output is one self-contained HTML file.
 
 ```
 ~/Library/Caches/cc-to-html/artifacts/<session>/   (macOS)
@@ -95,7 +105,7 @@ A `Stop` hook reads the assistant's reply, runs a deterministic classifier (no L
 %LOCALAPPDATA%\cc-to-html\Cache\artifacts\         (Windows)
 ```
 
-Decision-bar buttons (Copy as prompt) only emit what you selected in the artifact, never the full input. The assistant already has the input in context.
+Decision-bar buttons (Copy as prompt) only emit what you selected in the artifact, never the full input.
 
 ## Diagnostics
 
