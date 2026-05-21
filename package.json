@@ -1,0 +1,12 @@
+{
+  "name": "to-html-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Claude Code plugin — content-aware HTML rendering. Internal package; no runtime dependencies, marked is vendored.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test 'test/**/*.test.js'"
+  }
+}

@@ -1,6 +1,6 @@
 # to-html
 
-Toggle HTML rendering for Claude Code. `/to-html` flips it on; every reply also writes a self-contained HTML file. Native plan-mode renders a live dashboard.
+Content-aware HTML rendering for Claude Code. `/to-html` flips it on; every substantive reply is classified and rendered in the template that fits the content. Trivial replies are skipped.
 
 ## Install
 
@@ -15,11 +15,23 @@ Toggle HTML rendering for Claude Code. `/to-html` flips it on; every reply also 
 /to-html
 ```
 
-Pure toggle: first call enables HTML mode and asks once whether to auto-open generated files in your default browser. Second call disables. State and auto-open preference persist per project across CC restarts.
+First call enables HTML mode and asks once whether to auto-open generated files. Second call disables. State and preference persist per project.
+
+## Templates
+
+The Stop hook classifies each assistant reply and picks one:
+
+| Signal in the reply | Template |
+|---|---|
+| `## Phase N:` headings or `[ ]` task lists | `plan` — phase sidebar, status badges, live reload |
+| `## Option A/B/C` or `## Approach 1/2/3` | `comparison` — side-by-side cards with pros / cons / effort |
+| `TL;DR:` line + multi-section structure | `explainer` — TL;DR pill, sticky TOC, prose body |
+| Anything else with structure | `prose` — minimal editorial typography |
+| Under 240 chars, no structure | *skipped — no artifact* |
+
+`ExitPlanMode` always renders the `plan` template directly, with a 3-second auto-reload. As Claude executes the plan, the Stop hook diffs each subsequent reply against the task list and flips statuses live.
 
 ## Output
-
-Files are written outside the project:
 
 ```
 ~/Library/Caches/cc-to-html/artifacts/<session-id>/   (macOS)
@@ -27,57 +39,32 @@ Files are written outside the project:
 %LOCALAPPDATA%\cc-to-html\Cache\artifacts\<session-id>\   (Windows)
 ```
 
-Per-turn responses save as `NNNN-<slug>.html`. Plans save as `plan-<slug>.html` (stable filename, auto-reloads every 3 seconds).
+Filenames: `NNNN-<template>-<slug>.html` for per-turn artifacts, `plan-<slug>.html` for plans.
 
-## Plan mode
+Outside your project. Never written into the repo.
 
-When HTML mode is on and Claude calls `ExitPlanMode`, the plan auto-renders with a phase sidebar, status badges (◯ pending · ◐ in-progress · ● done · ✕ failed), progress bars, and a `Copy as markdown` export. The Stop hook then diffs each subsequent reply against the task list and flips statuses live.
+## Override (advanced)
 
-Status heuristic (line-scoped):
+Prepend a fenced block to a reply to force a template:
 
-| Assistant text | Status |
-|---|---|
-| `Inventory schemas: completed ✅` | done |
-| `Move auth: blocked, waiting on legal` | failed |
-| `List blockers: now working on this` | in-progress |
-
-## Interactive controls
-
-Ask for a slider, dropdown, choice, or kanban and Claude emits a fenced ` ```html-spec ` JSON block in its response. The block is stripped from the terminal output and rendered as controls in the HTML. `Copy as prompt` collects the control state and copies it back as a structured prompt. See `skills/to-html-schema/SKILL.md` for the schema.
-
-## Architecture
-
+```` 
+```to-html
+{"template":"comparison","title":"Three approaches"}
 ```
-/to-html        -> bin/cli.js writes per-project state
-Stop hook       -> bin/stop-hook.js reads transcript, renders per-turn HTML
-                   and (if activePlan is set) re-renders the plan file with
-                   status diff against the latest assistant turn
-PostToolUse     -> bin/post-tool-hook.js matches ExitPlanMode and renders
-                   the plan via bin/plan-renderer.js
-```
+````
 
-All HTML is produced by a deterministic Node renderer (Claude never authors HTML). Markdown parsing is the vendored `marked` (v13.0.3, MIT) under `vendor/`. Output sanitization uses a strict tag/attribute allowlist.
+The block is stripped before rendering. Unknown templates fall back to the classifier.
 
 ## Security
 
-- CSP meta tag: `default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`.
-- Link `href` and image `src` checked against `https:`, `http:`, `mailto:`, `#`, `/`, `data:image/*`. Everything else is dropped.
-- All `on*` event-handler attributes stripped.
-- HTML comments stripped.
-- Anchor tags get `rel="noopener noreferrer"`.
-- Generated files never re-enter Claude's context. Round-trip happens through the user's clipboard.
+- CSP: `default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'`. No network, no remote assets, no forms.
+- Tag/attribute allowlist sanitizer. All `on*` handlers stripped.
+- Link `href` / image `src` validated against safe URL pattern.
+- Claude never writes raw HTML. Markdown is parsed by vendored `marked`; templates render from structured data.
 
 ## Requirements
 
-- Node.js 18+
-- No npm install needed (`marked` is vendored).
-
-## Smoke test
-
-```
-echo '{"markdown":"# Hello\n\nWorld.","sessionId":"smoke","turnIndex":1}' \
-  | node bin/render.js
-```
+Node.js 18+. No npm install. `marked` is vendored under `vendor/`.
 
 ## License
 

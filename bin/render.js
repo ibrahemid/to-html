@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
-const { sessionArtifactsDir } = require('../lib/paths');
-const { extractHtmlSpec, renderMarkdown } = require('../lib/markdown');
-const { buildDocument } = require('../lib/template');
+const { sessionArtifactsDir, safeSessionSegment } = require('../lib/paths');
+const { classify } = require('../lib/classifier');
+const { dispatchRender } = require('../lib/templates/dispatch');
 const { openInBrowser, clickableUrl } = require('../lib/open');
+const { readJsonStdin, writeFileAtomic } = require('../lib/io');
+
+const MAX_MARKDOWN_BYTES = 2 * 1024 * 1024;
 
 class RenderError extends Error {
   constructor(message) {
@@ -16,7 +18,7 @@ class RenderError extends Error {
 }
 
 function slugify(input, fallback) {
-  const base = String(input || fallback || 'turn')
+  const base = String(input == null ? '' : input)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
@@ -24,81 +26,79 @@ function slugify(input, fallback) {
   return base || fallback || 'turn';
 }
 
-function readStdin() {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', (chunk) => { data += chunk; });
-    process.stdin.on('end', () => resolve(data));
-    process.stdin.on('error', reject);
-  });
+function clampTurnIndex(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.floor(n));
 }
 
-function deriveTitle(markdown) {
-  const lines = markdown.split('\n');
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('# ')) return trimmed.slice(2).trim();
-  }
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.length > 0 && !trimmed.startsWith('```')) {
-      return trimmed.slice(0, 80);
-    }
-  }
-  return 'Claude Code Response';
+function cappedMarkdown(raw) {
+  const value = typeof raw === 'string' ? raw : '';
+  if (Buffer.byteLength(value, 'utf8') <= MAX_MARKDOWN_BYTES) return value;
+  return value.slice(0, MAX_MARKDOWN_BYTES) + '\n\n*(content truncated — exceeded markdown size cap)*';
 }
 
 async function render(input) {
   if (!input || typeof input !== 'object') {
     throw new RenderError('render() requires an input object');
   }
-  const {
-    markdown = '',
-    sessionId = 'unknown',
-    turnIndex = 0,
-    project = '',
-    autoOpen = false,
-    titleOverride = null
-  } = input;
 
-  const { stripped, specs } = extractHtmlSpec(markdown);
-  const bodyHtml = renderMarkdown(stripped);
-  const title = titleOverride || deriveTitle(stripped);
-  const html = buildDocument({
-    title,
-    bodyHtml,
-    specs,
-    meta: { turnIndex, sessionId, project }
+  const markdown = cappedMarkdown(input.markdown);
+  const sessionId = safeSessionSegment(input.sessionId);
+  const turnIndex = clampTurnIndex(input.turnIndex);
+  const project = typeof input.project === 'string' ? input.project : '';
+  const autoOpen = input.autoOpen === true;
+
+  if (!markdown || !markdown.trim()) {
+    return { ok: true, skipped: true, reason: 'empty-markdown' };
+  }
+
+  const classification = classify(markdown);
+
+  if (classification.template === 'skip') {
+    return { ok: true, skipped: true, reason: classification.reason };
+  }
+
+  const sourceMarkdown = classification.source || markdown;
+  const rendered = dispatchRender({
+    template: classification.template,
+    markdown: sourceMarkdown,
+    meta: { turnIndex, sessionId, project },
+    signals: classification.signals,
+    override: classification.override
   });
 
   const dir = sessionArtifactsDir(sessionId);
-  const filename = `${String(turnIndex).padStart(4, '0')}-${slugify(title, 'turn')}.html`;
+  const filename = `${String(turnIndex).padStart(4, '0')}-${classification.template}-${slugify(rendered.title, 'turn')}.html`;
   const fullPath = path.join(dir, filename);
-  fs.writeFileSync(fullPath, html, 'utf8');
+  writeFileAtomic(fullPath, rendered.html);
 
+  let openError = null;
   if (autoOpen) {
-    try { openInBrowser(fullPath); } catch (_) {}
+    try { openInBrowser(fullPath); } catch (err) { openError = err.message; }
   }
 
   return {
     ok: true,
+    skipped: false,
+    template: classification.template,
+    reason: classification.reason,
+    title: rendered.title,
     path: fullPath,
     url: clickableUrl(fullPath),
-    title,
+    opened: !!autoOpen && !openError,
+    openError,
     turnIndex,
-    sessionId,
-    opened: !!autoOpen
+    sessionId
   };
 }
 
 async function main() {
   try {
-    const raw = await readStdin();
-    if (!raw.trim()) {
+    const input = await readJsonStdin();
+    if (!input || Object.keys(input).length === 0) {
       throw new RenderError('Empty stdin; expected JSON payload');
     }
-    const input = JSON.parse(raw);
     const result = await render(input);
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
   } catch (err) {
@@ -111,4 +111,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { render };
+module.exports = { render, MAX_MARKDOWN_BYTES };
