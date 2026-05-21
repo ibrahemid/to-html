@@ -3,6 +3,7 @@
 <p align="center">HTML rendering mode for Claude Code. Type <code>/to-html</code> and every substantive reply opens in your browser.</p>
 
 <p align="center">
+  <a href="https://ibrahemid.github.io/plugins/to-html/">Live gallery</a> ·
   <a href="#install">Install</a> ·
   <a href="#templates">Templates</a> ·
   <a href="#how-it-works">How it works</a> ·
