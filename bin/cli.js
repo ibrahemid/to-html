@@ -4,10 +4,14 @@
 const { readState, writeState } = require('../lib/state');
 const { homeShortcut, resolveCacheRoot } = require('../lib/paths');
 
-function parseArg(value) {
+const KNOWN_TOGGLE_ARGS = new Set(['on', 'off', 'status', 'reset', 'toggle']);
+const KNOWN_AUTO_OPEN_ARGS = new Set(['yes', 'no', 'true', 'false']);
+
+function parseArg(value, allowed) {
   if (value === undefined || value === null) return null;
   const v = String(value).trim().toLowerCase();
-  if (v === '') return null;
+  if (v === '' || v.length > 16) return null;
+  if (allowed && !allowed.has(v)) return null;
   return v;
 }
 
@@ -75,10 +79,17 @@ function actionStatus() {
 
 function main() {
   const [, , cmd = 'status', rawArg = ''] = process.argv;
-  const arg = parseArg(rawArg);
+  const trimmed = String(rawArg).trim();
   try {
-    if (cmd === 'toggle') return actionToggle(arg);
-    if (cmd === 'set-auto-open') return actionSetAutoOpen(arg);
+    if (cmd === 'toggle') {
+      if (trimmed === '') return actionToggle(null);
+      const arg = parseArg(rawArg, KNOWN_TOGGLE_ARGS);
+      if (arg === null) {
+        return fail(`Unrecognized argument. Expected one of: ${[...KNOWN_TOGGLE_ARGS].join(', ')}`);
+      }
+      return actionToggle(arg);
+    }
+    if (cmd === 'set-auto-open') return actionSetAutoOpen(parseArg(rawArg, KNOWN_AUTO_OPEN_ARGS));
     if (cmd === 'status') return actionStatus();
     fail(`Unknown cli command: ${cmd}`);
   } catch (err) {
