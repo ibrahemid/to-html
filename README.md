@@ -10,6 +10,12 @@
   <a href="./CHANGELOG.md">Changelog</a>
 </p>
 
+<p align="center">
+  <a href="https://ibrahemid.github.io/plugins/examples/to-html/plan.html">
+    <img src="./docs/screenshots/thumb-plan.png" alt="to-html plan template — phase sidebar with status badges and focus checkboxes" width="900">
+  </a>
+</p>
+
 ## Install
 
 ```
@@ -28,15 +34,48 @@ First enable asks once whether to auto-open. Answer persists.
 
 ## Templates
 
-The Stop hook classifies each reply and picks one. Trivial replies (one-liners, status echoes) skip rendering — no artifact, clean terminal.
+The Stop hook classifies each reply and picks one. Click any thumbnail for the live, interactive artifact.
 
-| Template | Triggers on | What it gives you |
-|---|---|---|
-| `plan` | `## Phase N:` headings or 3+ `[ ]` tasks | Phase sidebar, status badges (◯ ◐ ● ✕), progress bar, focus checkboxes on each task, copy-as-prompt with your selections |
-| `comparison` | 2+ `## Option / Approach / Variant` headings | Side-by-side cards with pros/cons/effort, click to pick, one-line reason field, copy-as-prompt with your choice |
-| `explainer` | `TL;DR:` keyword or multi-section structure | TL;DR pill, sticky table of contents, prose body in a comfortable column |
-| `prose` | Anything substantive without the above structure | Minimal editorial typography. No chrome, no fluff. |
-| `skip` | < 240 chars, no headings, no code, no tables | No artifact. Terminal stays clean. |
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <a href="https://ibrahemid.github.io/plugins/examples/to-html/prose.html">
+        <img src="./docs/screenshots/thumb-prose.png" alt="prose template" width="420">
+      </a>
+      <br><sub><b>prose</b> — editorial typography for anything substantive without special structure</sub>
+    </td>
+    <td align="center" width="50%">
+      <a href="https://ibrahemid.github.io/plugins/examples/to-html/plan.html">
+        <img src="./docs/screenshots/thumb-plan.png" alt="plan template" width="420">
+      </a>
+      <br><sub><b>plan</b> — phase sidebar, live status badges, per-task focus checkboxes</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://ibrahemid.github.io/plugins/examples/to-html/comparison.html">
+        <img src="./docs/screenshots/thumb-comparison.png" alt="comparison template" width="420">
+      </a>
+      <br><sub><b>comparison</b> — side-by-side options, pros/cons, pick + reason</sub>
+    </td>
+    <td align="center">
+      <a href="https://ibrahemid.github.io/plugins/examples/to-html/explainer.html">
+        <img src="./docs/screenshots/thumb-explainer.png" alt="explainer template" width="420">
+      </a>
+      <br><sub><b>explainer</b> — TL;DR pill, sticky TOC, reading column</sub>
+    </td>
+  </tr>
+</table>
+
+Trivial replies (one-liners, status echoes — under 240 chars with no structure) skip rendering. No artifact, clean terminal.
+
+| Triggers on | Template |
+|---|---|
+| `## Phase N:` headings or 3+ `[ ]` tasks | `plan` |
+| 2+ `## Option / Approach / Variant` headings | `comparison` |
+| `TL;DR:` keyword or multi-section structure | `explainer` |
+| Anything else with structure | `prose` |
+| Under 240 chars, no structure | `skip` |
 
 Override the classifier from any reply by prepending a fenced block:
 
