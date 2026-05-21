@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.1
+
+### Added
+- `/to-html diag` (or `debug`, `doctor`, `status`) prints plugin version, current mode, state file path, recent hook events, and recovery hints. Run it whenever the hook seems silent — it tells you whether the Stop hook is firing at all.
+- `lib/diag.js` writes a one-line JSON event per hook invocation to `~/Library/Caches/cc-to-html/diag/hook.log` (capped at 256 KB / 200 lines). Lets the diagnostic tool report the truth, not assumptions.
+- `bin/diagnose.js` reads state + recent log + version into a single human-readable report.
+
+### Why
+- CC's `/plugin update` downloads the new files but may not re-register hooks until `/reload-plugins` (or a full CC restart). The previous version had no way to tell whether a "silent" plugin was misbehaving or just waiting for a reload. Now `/to-html diag` answers that immediately.
+
 ## v1.0.0
 
 ### Added

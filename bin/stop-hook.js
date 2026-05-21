@@ -7,6 +7,7 @@ const { readState } = require('../lib/state');
 const { render } = require('./render');
 const { renderPlan } = require('./plan-renderer');
 const { readJsonStdin } = require('../lib/io');
+const { appendEvent } = require('../lib/diag');
 
 const MAX_TRANSCRIPT_LINE_BYTES = 1 * 1024 * 1024;
 
@@ -77,12 +78,16 @@ async function main() {
   const state = readState(cwd);
 
   if (state.mode !== 'on') {
+    appendEvent({ kind: 'stop', mode: 'off', cwd, note: 'skipped — mode off' });
     process.exit(0);
   }
 
   const transcriptPath = payload.transcript_path || payload.transcriptPath || null;
   const { text, turnIndex } = findLastAssistantText(transcriptPath);
-  if (!text || !text.trim()) process.exit(0);
+  if (!text || !text.trim()) {
+    appendEvent({ kind: 'stop', mode: 'on', cwd, note: 'no assistant text' });
+    process.exit(0);
+  }
 
   const sessionId = payload.session_id || payload.sessionId || 'unknown';
   const projectName = cwd ? path.basename(cwd) : '';
@@ -97,10 +102,19 @@ async function main() {
       project: projectName,
       autoOpen: state.autoOpen === true
     });
+    appendEvent({
+      kind: 'stop',
+      mode: 'on',
+      cwd,
+      template: result.template || (result.skipped ? 'skip' : null),
+      skipped: !!result.skipped,
+      reason: result.reason
+    });
     if (!result.skipped) {
       messages.push(`[to-html · ${result.template}] ${result.url}`);
     }
   } catch (err) {
+    appendEvent({ kind: 'stop', mode: 'on', cwd, error: err.message });
     messages.push(`[to-html] render failed: ${err.message}`);
   }
 

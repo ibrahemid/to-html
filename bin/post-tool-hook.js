@@ -5,6 +5,7 @@ const path = require('path');
 const { readState } = require('../lib/state');
 const { renderPlan } = require('./plan-renderer');
 const { readJsonStdin } = require('../lib/io');
+const { appendEvent } = require('../lib/diag');
 
 function emit(systemMessage) {
   process.stdout.write(JSON.stringify({ systemMessage }));
@@ -62,9 +63,12 @@ async function handleExitPlanMode(payload) {
 async function main() {
   const payload = await readJsonStdin();
   if (!payload || typeof payload !== 'object') {
+    appendEvent({ kind: 'post-tool', note: 'empty payload' });
     process.exit(0);
   }
   const toolName = payload.tool_name || payload.toolName || '';
+  const cwd = (typeof payload.cwd === 'string') ? payload.cwd : (process.env.CLAUDE_PROJECT_DIR || process.cwd());
+  appendEvent({ kind: 'post-tool', tool: toolName, cwd });
   if (toolName === 'ExitPlanMode' || toolName === 'exit_plan_mode') {
     await handleExitPlanMode(payload);
   }
