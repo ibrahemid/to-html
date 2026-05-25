@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.1
+
+### Fixed
+- **Rendered the wrong turn.** Toggling `/to-html` on mid-conversation rendered the toggle's own status reply (`HTML mode: ON · auto-open: yes …`) instead of the substantive response you were looking at. The Stop hook now strips plugin-control lines (`HTML mode:`, the auto-open question, `[to-html …]` echoes) and walks back up to 12 turns to render the **most recent substantive** assistant message. Toggling on now renders what was on screen when you toggled.
+- **Plain-text auto-open prompt.** The skill now asks the auto-open question through the native `AskUserQuestion` UI instead of a `(yes/no)` text line.
+
+### Note
+The retry-on-short-read logic from v1.0.2 still applies — it now retries the substantive-target resolution, so a mid-flush transcript no longer yields a stale or empty render. 72 tests (was 64); 8 new cover control-stripping and last-substantive selection, verified against the real transcript that exposed the bug.
+
 ## v1.1.0
 
 ### Added

@@ -9,10 +9,14 @@ const { render } = require('./render');
 const { renderPlan } = require('./plan-renderer');
 const { readJsonStdin } = require('../lib/io');
 const { appendEvent } = require('../lib/diag');
+const { classify } = require('../lib/classifier');
 
 const MAX_TRANSCRIPT_LINE_BYTES = 1 * 1024 * 1024;
 const RETRY_DELAY_MS = 600;
 const RETRY_MIN_CHARS = 400;
+const MAX_LOOKBACK = 12;
+
+const CONTROL_LINE_RE = /^\s*(HTML mode:|Auto-open generated HTML files|\[to-html\b)/i;
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -31,19 +35,25 @@ function extractTextFromContent(content) {
     .join('\n\n');
 }
 
-function findLastAssistantText(transcriptPath) {
-  if (!transcriptPath || typeof transcriptPath !== 'string') return { text: null, turnIndex: 0 };
-  if (!fs.existsSync(transcriptPath)) return { text: null, turnIndex: 0 };
+function stripControlLines(text) {
+  return text
+    .split('\n')
+    .filter((line) => !CONTROL_LINE_RE.test(line))
+    .join('\n')
+    .trim();
+}
+
+function collectAssistantTexts(transcriptPath) {
+  if (!transcriptPath || typeof transcriptPath !== 'string') return [];
+  if (!fs.existsSync(transcriptPath)) return [];
   let raw;
   try {
     raw = fs.readFileSync(transcriptPath, 'utf8');
   } catch (_) {
-    return { text: null, turnIndex: 0 };
+    return [];
   }
-  const lines = raw.split('\n');
-  let lastText = null;
-  let assistantCount = 0;
-  for (const line of lines) {
+  const out = [];
+  for (const line of raw.split('\n')) {
     if (!line.trim()) continue;
     if (Buffer.byteLength(line, 'utf8') > MAX_TRANSCRIPT_LINE_BYTES) continue;
     let obj;
@@ -52,12 +62,28 @@ function findLastAssistantText(transcriptPath) {
     const msg = obj.message;
     if (!msg || typeof msg !== 'object') continue;
     const text = extractTextFromContent(msg.content);
-    if (text && text.trim()) {
-      assistantCount += 1;
-      lastText = text;
+    if (text && text.trim()) out.push(text);
+  }
+  return out;
+}
+
+// Pick the most recent SUBSTANTIVE assistant message — skipping plugin-control
+// chatter (the /to-html toggle status, the auto-open question) and anything the
+// classifier would skip. This is what the user was actually looking at when they
+// toggled, not the toggle's own reply.
+function pickRenderTarget(transcriptPath) {
+  const texts = collectAssistantTexts(transcriptPath);
+  const total = texts.length;
+  const start = Math.max(0, total - MAX_LOOKBACK);
+  for (let i = total - 1; i >= start; i--) {
+    const stripped = stripControlLines(texts[i]);
+    if (!stripped) continue;
+    const cls = classify(stripped);
+    if (cls.template !== 'skip') {
+      return { text: stripped, turnIndex: i + 1, template: cls.template };
     }
   }
-  return { text: lastText, turnIndex: assistantCount };
+  return null;
 }
 
 function planToMarkdownStub(plan) {
@@ -80,17 +106,22 @@ function planToMarkdownStub(plan) {
   return out.join('\n');
 }
 
-async function resolveStableText(transcriptPath) {
-  const first = findLastAssistantText(transcriptPath);
-  const firstLen = first.text ? first.text.length : 0;
-  if (firstLen >= RETRY_MIN_CHARS) {
+// Resolve the substantive target, retrying once if the candidate is short —
+// CC flushes the final assistant text block to the transcript shortly after
+// firing the Stop hook, so the first read can be incomplete.
+async function resolveTarget(transcriptPath) {
+  const first = pickRenderTarget(transcriptPath);
+  const firstLen = first && first.text ? first.text.length : 0;
+  if (first && firstLen >= RETRY_MIN_CHARS) {
     return { ...first, retries: 0, firstLen };
   }
   await sleep(RETRY_DELAY_MS);
-  const second = findLastAssistantText(transcriptPath);
-  const secondLen = second.text ? second.text.length : 0;
-  if (secondLen > firstLen) return { ...second, retries: 1, firstLen };
-  return { ...second, retries: 1, firstLen };
+  const second = pickRenderTarget(transcriptPath);
+  const secondLen = second && second.text ? second.text.length : 0;
+  if (second && (!first || secondLen >= firstLen)) {
+    return { ...second, retries: 1, firstLen };
+  }
+  return first ? { ...first, retries: 1, firstLen } : { text: null, turnIndex: 0, retries: 1, firstLen };
 }
 
 async function main() {
@@ -105,12 +136,12 @@ async function main() {
   }
 
   const transcriptPath = payload.transcript_path || payload.transcriptPath || null;
-  const stable = await resolveStableText(transcriptPath);
+  const stable = await resolveTarget(transcriptPath);
   const text = stable.text;
   const turnIndex = stable.turnIndex;
 
   if (!text || !text.trim()) {
-    appendEvent({ kind: 'stop', mode: 'on', cwd, note: 'no assistant text', firstLen: stable.firstLen, retries: stable.retries });
+    appendEvent({ kind: 'stop', mode: 'on', cwd, note: 'no substantive text', firstLen: stable.firstLen, retries: stable.retries });
     process.exit(0);
   }
 
@@ -181,7 +212,11 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
-  process.stderr.write(`[to-html] stop-hook fatal: ${err.message}\n`);
-  process.exit(0);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    process.stderr.write(`[to-html] stop-hook fatal: ${err.message}\n`);
+    process.exit(0);
+  });
+}
+
+module.exports = { stripControlLines, collectAssistantTexts, pickRenderTarget };

@@ -27,7 +27,12 @@ The script flips state and writes JSON to stdout:
 
 After the call:
 
-1. If `mode` is `on` and `autoOpen` is `null`, ask the user **once**: `Auto-open generated HTML files in your browser? (yes/no)`. When they answer, run:
+1. If `mode` is `on` and `autoOpen` is `null`, ask the user with the **AskUserQuestion tool** (never plain text). Use:
+   - header: `Auto-open`
+   - question: `Auto-open generated HTML files in your browser after each reply?`
+   - options: `Yes, auto-open` (description: "Each rendered artifact opens in your default browser automatically.") and `No, just print the link` (description: "Print the file:// link; you open it when you want.")
+
+   Map their choice to `yes` or `no` and run:
 
    ```bash
    node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" set-auto-open "<yes|no>"
@@ -35,7 +40,7 @@ After the call:
 
 2. Print the `message` field as a single line. Nothing else. No headers, no commentary, no closing summary.
 
-When mode is on, the Stop hook decides per-reply whether to render an HTML artifact (it skips trivial replies). A PostToolUse hook on `ExitPlanMode` always renders plans as a live dashboard. Toggling off silences both hooks.
+When mode is on, the Stop hook renders the **most recent substantive reply** — it automatically skips its own toggle status, the auto-open question, and other trivial chatter, so toggling on mid-conversation renders the response you were already looking at. A PostToolUse hook on `ExitPlanMode` always renders plans as a live dashboard. Toggling off silences both hooks.
 
 ## Diagnostic flow
 
