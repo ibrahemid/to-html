@@ -65,7 +65,7 @@
     });
 
     var lines = [];
-    lines.push('Focus on these tasks from the "' + info.title + '" plan next. Skip the rest for now.');
+    lines.push('Focus on these tasks from the "' + info.title + '" plan next.');
     lines.push('');
     Object.keys(byPhase).forEach(function (phase) {
       if (phase) lines.push('### ' + phase);

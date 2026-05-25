@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.0.1
+
+### Fixed
+- **Dropped the reply after the one you toggled on.** The Stop hook fires before Claude Code flushes the new reply to the transcript. If a *previous* reply was already long enough, the hook read it, saw it matched the last-rendered hash, and skipped, so the next reply never got its own artifact. The hook now treats an already-rendered candidate as not-yet-flushed and retries (up to 3 times) until a fresh substantive reply lands.
+
+### Changed
+- The copied prompt no longer appends unrequested directives ("Proceed with implementation…", "Skip the rest for now."). It emits only your selection.
+- Trimmed chatty in-artifact microcopy and the prose kicker / reading-time line.
+
 ## v2.0.0
 
 ### Added
@@ -8,13 +17,13 @@
 - **Reading-order stepper** at the bottom: `‹ N / total · current heading ›`. Keyboard: `j`/`k` or `←`/`→`.
 - **In-page search/filter** over section headings and graph nodes. `/` to focus.
 - **Settings gear** (top-right): theme (auto/light/dark/sepia), text size (S/M/L/XL), width (narrow/comfortable/wide), font (sans/serif), and toggles to hide TL;DR / map / stepper. CSS-variable driven, per-page state in `sessionStorage`, durable defaults via `/to-html config`.
-- **`UserPromptSubmit` hook** (`bin/prompt-hook.js`): while mode is on, injects the authoring contract reminder so the model leads substantial replies with a real `**TL;DR:**` and emits a `mermaid` block when content has real relationships.
+- **`UserPromptSubmit` hook** (`bin/prompt-hook.js`): while mode is on, injects a reminder so the model leads substantial replies with a `**TL;DR:**` line and emits a `mermaid` block when content has related parts.
 - **`/to-html config <key> <value>`** for `auto-open`, `theme`, `size`, `width`, `font`. Persists in state and is baked into every artifact's `:root` data-attributes.
 
 ### Changed
 - **Render gate** (`shouldRender`) distinct from `shouldSkip`. Default thresholds: 600+ prose chars, OR 2+ headings, OR a code block, OR a table (≥3 rows), OR 3+ checkboxes, OR an explicit mermaid/`to-html` block. Manual `/to-html` toggle bypasses the gate so the response you were already looking at always renders.
 - **Auto-open default is `false`.** The skill no longer asks the auto-open question. Enable it with `/to-html config auto-open yes`.
-- **Typography overhaul.** Reading-first defaults: 18px, line-height ~1.62, 66ch measure. Dropped the prose template's drop cap, roman-numeral section counters, all-small-caps first lines, paragraph indents, and end-mark.
+- **Reading-first typography.** Defaults: 18px, line-height ~1.62, 66ch measure. Dropped the prose template's drop cap, roman-numeral section counters, all-small-caps first lines, paragraph indents, and end-mark.
 - **`buildShell` slots** (`tldrHtml`, `mapHtml`, `chromeHtml`, `uiDefaults`). TL;DR + map + chrome are resolved once in `bin/render.js` and emitted by the shell, not by individual templates. Templates render their body accent only.
 - **`renderSvg` extracted** to `lib/svg-graph.js` so the diagram template and the universal map share one renderer.
 - **State schema v4.** New fields: `autoOpen` (boolean, default `false`), `uiDefaults`, `renderThreshold`, `modeChangedAt`. v3 files migrate automatically; the v3 `activePlan` reset still runs.
@@ -36,7 +45,7 @@ The retry-on-short-read logic from v1.0.2 still applies — it now retries the s
 
 ### Added
 - **`diagram` template.** When a reply contains a fenced ` ```mermaid ` block with `graph TD/LR` syntax, the Stop hook parses it (`lib/diagram-parser.js`), computes a topological layout (`lib/diagram-layout.js`), and renders pure SVG. Hover a node to dim the rest and trace its incoming and outgoing edges. Click to lock the focus; click outside to clear. No mermaid runtime — the diagram ships as plain SVG inside the artifact, fits the existing CSP.
-- **Editorial-grade prose template.** Iowan Old Style with old-style numerals, ochre drop cap on the lead paragraph, Roman-numeral section markers in the left margin, small caps follow-up paragraphs, asterism between sections, ❦ end mark. Estimated reading time in the masthead.
+- **Prose template** with serif body, drop cap, roman-numeral section markers, and a reading-time estimate. (Removed in v2.0.0.)
 - Six templates total (was four user-visible): `diagram`, `plan`, `comparison`, `explainer`, `prose`, `skip`.
 
 ### Gallery
@@ -48,17 +57,17 @@ The retry-on-short-read logic from v1.0.2 still applies — it now retries the s
 
 ### Fixed
 - **Stop hook reading stale transcript.** CC writes the assistant's final text block to the transcript JSONL *after* firing the `Stop` hook. The hook was reading the file before the final block landed, seeing only the short preface text (or no text), and classifying the whole turn as `trivial` / `skip`. The big response that followed got no artifact. Now: on first read, if the text is under 400 chars, the hook sleeps 600 ms and re-reads once. Stable text drives the render.
-- **Duplicate renders on multi-fire turns.** Each `Stop` event now hashes the latest assistant text and stores the hash in `state.lastRenderedTextHash`. If `Stop` fires again with the same text (which can happen when CC re-fires on subagent boundaries), the second invocation no-ops. Cleanly idempotent.
+- **Duplicate renders on multi-fire turns.** Each `Stop` event now hashes the latest assistant text and stores the hash in `state.lastRenderedTextHash`. If `Stop` fires again with the same text (which can happen when CC re-fires on subagent boundaries), the second invocation no-ops.
 - Diag log now records `textLen` and `retries` per event so timing issues are visible at a glance.
 
 ### Why
-Symptom: turning HTML mode on in a fresh CC session, asking for a repo overview, getting a substantive multi-section reply — but no `[to-html · ...]` line and no file. `/to-html diag` showed the hook *was* firing, just classifying the wrong content. Root cause was the transcript-flush race, not registration. v1.0.2 fixes the actual bug.
+Symptom: turning HTML mode on in a fresh CC session, asking for a repo overview, getting a substantive multi-section reply — but no `[to-html · ...]` line and no file. `/to-html diag` showed the hook *was* firing, just classifying the wrong content. Root cause was the transcript-flush race, not registration.
 
 ## v1.0.1
 
 ### Added
 - `/to-html diag` (or `debug`, `doctor`, `status`) prints plugin version, current mode, state file path, recent hook events, and recovery hints. Run it whenever the hook seems silent — it tells you whether the Stop hook is firing at all.
-- `lib/diag.js` writes a one-line JSON event per hook invocation to `~/Library/Caches/cc-to-html/diag/hook.log` (capped at 256 KB / 200 lines). Lets the diagnostic tool report the truth, not assumptions.
+- `lib/diag.js` writes a one-line JSON event per hook invocation to `~/Library/Caches/cc-to-html/diag/hook.log` (capped at 256 KB / 200 lines).
 - `bin/diagnose.js` reads state + recent log + version into a single human-readable report.
 
 ### Why
@@ -94,7 +103,7 @@ Symptom: turning HTML mode on in a fresh CC session, asking for a repo overview,
 
 ### Removed
 - "Copy as markdown" button that dumped the full plan. Replaced with intent-capturing decision bar.
-- "Generated by cc-to-html. CSP locks this artifact…" footer. Self-congratulatory and uninformative.
+- "Generated by cc-to-html. CSP locks this artifact…" footer.
 - Per-turn copy-as-prompt button in prose/explainer templates. They have nothing to copy.
 - Old monolithic `template.js` and `plan-template.js`. Logic moved into `lib/templates/`.
 - The `to-html-schema` skill. Server-side classification replaces it.

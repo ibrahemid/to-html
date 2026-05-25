@@ -4,11 +4,7 @@
 const path = require('path');
 const { sessionArtifactsDir, safeSessionSegment } = require('../lib/paths');
 const { classify, shouldRender } = require('../lib/classifier');
-const { dispatchRender } = require('../lib/templates/dispatch');
-const { extractSummary } = require('../lib/summary');
-const { buildSectionIndex } = require('../lib/section-index');
-const { resolveGraph } = require('../lib/graph-source');
-const { renderTldrBand, renderMapSection, renderChrome } = require('../lib/templates/parts');
+const { composeArtifact } = require('../lib/compose');
 const { openInBrowser, clickableUrl } = require('../lib/open');
 const { readJsonStdin, writeFileAtomic } = require('../lib/io');
 
@@ -56,6 +52,7 @@ async function render(input) {
   const renderThreshold = (input.renderThreshold && typeof input.renderThreshold === 'object')
     ? input.renderThreshold
     : null;
+  const uiDefaults = (input.uiDefaults && typeof input.uiDefaults === 'object') ? input.uiDefaults : null;
 
   if (!markdown || !markdown.trim()) {
     return { ok: true, skipped: true, reason: 'empty-markdown' };
@@ -76,30 +73,17 @@ async function render(input) {
     }
   }
 
-  const { tldr, body: bodyAfterTldr } = extractSummary(sourceMarkdown);
-  const { sections, annotatedMarkdown } = buildSectionIndex(bodyAfterTldr);
-  const resolvedGraph = resolveGraph(annotatedMarkdown, sections);
-  const tldrHtml = renderTldrBand(tldr);
-  const mapHtml = renderMapSection({ graph: resolvedGraph, sections });
-  const uiDefaults = (input.uiDefaults && typeof input.uiDefaults === 'object') ? input.uiDefaults : null;
-  const chromeHtml = renderChrome({ uiDefaults, sections });
-
-  const rendered = dispatchRender({
-    template: classification.template,
-    markdown: annotatedMarkdown,
+  const artifact = composeArtifact({
+    markdown,
+    classification,
     meta: { turnIndex, sessionId, project },
-    signals: classification.signals,
-    override: classification.override,
-    tldrHtml,
-    mapHtml,
-    chromeHtml,
     uiDefaults
   });
 
   const dir = sessionArtifactsDir(sessionId);
-  const filename = `${String(turnIndex).padStart(4, '0')}-${classification.template}-${slugify(rendered.title, 'turn')}.html`;
+  const filename = `${String(turnIndex).padStart(4, '0')}-${classification.template}-${slugify(artifact.title, 'turn')}.html`;
   const fullPath = path.join(dir, filename);
-  writeFileAtomic(fullPath, rendered.html);
+  writeFileAtomic(fullPath, artifact.html);
 
   let openError = null;
   if (autoOpen) {
@@ -111,7 +95,7 @@ async function render(input) {
     skipped: false,
     template: classification.template,
     reason: classification.reason,
-    title: rendered.title,
+    title: artifact.title,
     path: fullPath,
     url: clickableUrl(fullPath),
     opened: !!autoOpen && !openError,

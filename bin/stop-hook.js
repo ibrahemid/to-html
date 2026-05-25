@@ -12,8 +12,9 @@ const { appendEvent } = require('../lib/diag');
 const { classify } = require('../lib/classifier');
 
 const MAX_TRANSCRIPT_LINE_BYTES = 1 * 1024 * 1024;
-const RETRY_DELAY_MS = 600;
+const RETRY_DELAY_MS = 500;
 const RETRY_MIN_CHARS = 400;
+const MAX_RETRIES = 3;
 const MAX_LOOKBACK = 12;
 
 const CONTROL_LINE_RE = /^\s*(HTML mode:|Auto-open generated HTML files|\[to-html\b)/i;
@@ -106,22 +107,36 @@ function planToMarkdownStub(plan) {
   return out.join('\n');
 }
 
-// Resolve the substantive target, retrying once if the candidate is short —
-// CC flushes the final assistant text block to the transcript shortly after
-// firing the Stop hook, so the first read can be incomplete.
-async function resolveTarget(transcriptPath) {
-  const first = pickRenderTarget(transcriptPath);
-  const firstLen = first && first.text ? first.text.length : 0;
-  if (first && firstLen >= RETRY_MIN_CHARS) {
-    return { ...first, retries: 0, firstLen };
+// Resolve the substantive target. CC flushes the final assistant text block to
+// the transcript shortly *after* firing the Stop hook, so an early read can miss
+// the new reply and surface the previous turn instead. A candidate is "stale" if
+// it is empty, too short, or identical to the reply we already rendered
+// (lastHash) — the last case means the new reply has not landed yet. Retry a few
+// times, accepting the first fresh, substantive read.
+async function resolveTarget(transcriptPath, lastHash, opts) {
+  const delayMs = opts && Number.isFinite(opts.delayMs) ? opts.delayMs : RETRY_DELAY_MS;
+  const maxRetries = opts && Number.isFinite(opts.maxRetries) ? opts.maxRetries : MAX_RETRIES;
+
+  const isStale = (t) =>
+    !t || !t.text ||
+    t.text.length < RETRY_MIN_CHARS ||
+    (lastHash != null && hashText(t.text) === lastHash);
+
+  let best = pickRenderTarget(transcriptPath);
+  const firstLen = best && best.text ? best.text.length : 0;
+  let retries = 0;
+
+  while (retries < maxRetries && isStale(best)) {
+    await sleep(delayMs);
+    retries += 1;
+    const next = pickRenderTarget(transcriptPath);
+    if (!next || !next.text) continue;
+    if (!isStale(next)) { best = next; break; }
+    if (!best || !best.text || next.text.length > best.text.length) best = next;
   }
-  await sleep(RETRY_DELAY_MS);
-  const second = pickRenderTarget(transcriptPath);
-  const secondLen = second && second.text ? second.text.length : 0;
-  if (second && (!first || secondLen >= firstLen)) {
-    return { ...second, retries: 1, firstLen };
-  }
-  return first ? { ...first, retries: 1, firstLen } : { text: null, turnIndex: 0, retries: 1, firstLen };
+
+  if (!best || !best.text) return { text: null, turnIndex: 0, retries, firstLen };
+  return { ...best, retries, firstLen };
 }
 
 async function main() {
@@ -136,7 +151,7 @@ async function main() {
   }
 
   const transcriptPath = payload.transcript_path || payload.transcriptPath || null;
-  const stable = await resolveTarget(transcriptPath);
+  const stable = await resolveTarget(transcriptPath, state.lastRenderedTextHash);
   const text = stable.text;
   const turnIndex = stable.turnIndex;
 
@@ -230,4 +245,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { stripControlLines, collectAssistantTexts, pickRenderTarget };
+module.exports = { stripControlLines, collectAssistantTexts, pickRenderTarget, resolveTarget, hashText };

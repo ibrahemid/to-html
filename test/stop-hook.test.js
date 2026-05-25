@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 
-const { stripControlLines, collectAssistantTexts, pickRenderTarget } = require('../bin/stop-hook');
+const { stripControlLines, collectAssistantTexts, pickRenderTarget, resolveTarget, hashText } = require('../bin/stop-hook');
 
 function writeTranscript(lines) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-to-html-tx-'));
@@ -99,4 +99,35 @@ test('collectAssistantTexts ignores tool-only and user lines', () => {
   const texts = collectAssistantTexts(file);
   assert.equal(texts.length, 1);
   assert.equal(texts[0], 'Real text.');
+});
+
+const PREV = '# Previous answer\n\n' + 'Already rendered content. '.repeat(30);
+const NEXT = '# New answer\n\n' + 'Freshly flushed substantive content. '.repeat(30);
+
+test('resolveTarget waits past an already-rendered reply for the freshly-flushed one', async () => {
+  const file = writeTranscript([user('q1'), assistant(PREV)]);
+  const lastHash = hashText(stripControlLines(PREV));
+  // Simulate CC flushing the new reply to the transcript just after the hook fires.
+  setTimeout(() => {
+    fs.appendFileSync(file, '\n' + JSON.stringify(user('q2')) + '\n' + JSON.stringify(assistant(NEXT)));
+  }, 60);
+  const target = await resolveTarget(file, lastHash, { delayMs: 50, maxRetries: 5 });
+  assert.ok(target.text.startsWith('# New answer'), 'should render the new reply, not the already-rendered one');
+  assert.ok(target.retries >= 1);
+});
+
+test('resolveTarget returns the already-rendered reply when nothing new flushes (caller skips it)', async () => {
+  const file = writeTranscript([user('q1'), assistant(PREV)]);
+  const lastHash = hashText(stripControlLines(PREV));
+  const target = await resolveTarget(file, lastHash, { delayMs: 10, maxRetries: 2 });
+  assert.ok(target.text.startsWith('# Previous answer'));
+  assert.equal(target.retries, 2);
+  assert.equal(hashText(target.text), lastHash);
+});
+
+test('resolveTarget returns a fresh substantive reply immediately when no lastHash', async () => {
+  const file = writeTranscript([user('q1'), assistant(NEXT)]);
+  const target = await resolveTarget(file, null, { delayMs: 10, maxRetries: 2 });
+  assert.ok(target.text.startsWith('# New answer'));
+  assert.equal(target.retries, 0);
 });

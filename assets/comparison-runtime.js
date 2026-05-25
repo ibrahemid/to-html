@@ -22,7 +22,7 @@
     var picked = getPicked();
     var pickLabel = $('#pick-label');
     var btn = $('#copy-decision-btn');
-    if (pickLabel) pickLabel.textContent = picked ? 'Going with: ' + picked.label : 'Pick an option';
+    if (pickLabel) pickLabel.textContent = picked ? 'Selected: ' + picked.label : 'Pick an option';
     if (btn) btn.disabled = !picked;
   }
 
@@ -36,8 +36,6 @@
       lines.push('');
       lines.push('Reason: ' + reason);
     }
-    lines.push('');
-    lines.push('Proceed with implementation. Confirm any assumptions before writing code.');
     return lines.join('\n');
   }
 

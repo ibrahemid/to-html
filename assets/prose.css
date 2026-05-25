@@ -13,15 +13,6 @@ body.tpl-prose {
   border-bottom: 1px solid var(--border);
 }
 
-.tpl-prose .prose-kicker {
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--fg-muted);
-  margin: 0 0 16px;
-}
-
 .tpl-prose .prose-title {
   font-family: inherit;
   font-weight: 700;
