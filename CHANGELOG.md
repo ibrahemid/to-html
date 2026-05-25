@@ -1,5 +1,28 @@
 # Changelog
 
+## v2.0.0
+
+### Added
+- **TL;DR band** at the top of every artifact when the reply opens with `**TL;DR:** …` (or `## TL;DR`). Hoisted out of the body, never synthesized.
+- **Concept map** rendered from a ```` ```mermaid ```` block. Interactive: hover to trace edges, click a node to scroll to its matching section and open a detail panel, drag to pan, scroll or `+`/`-`/`0` to zoom. When no mermaid block exists, a sticky **TOC rail** replaces the map.
+- **Reading-order stepper** at the bottom: `‹ N / total · current heading ›`. Keyboard: `j`/`k` or `←`/`→`.
+- **In-page search/filter** over section headings and graph nodes. `/` to focus.
+- **Settings gear** (top-right): theme (auto/light/dark/sepia), text size (S/M/L/XL), width (narrow/comfortable/wide), font (sans/serif), and toggles to hide TL;DR / map / stepper. CSS-variable driven, per-page state in `sessionStorage`, durable defaults via `/to-html config`.
+- **`UserPromptSubmit` hook** (`bin/prompt-hook.js`): while mode is on, injects the authoring contract reminder so the model leads substantial replies with a real `**TL;DR:**` and emits a `mermaid` block when content has real relationships.
+- **`/to-html config <key> <value>`** for `auto-open`, `theme`, `size`, `width`, `font`. Persists in state and is baked into every artifact's `:root` data-attributes.
+
+### Changed
+- **Render gate** (`shouldRender`) distinct from `shouldSkip`. Default thresholds: 600+ prose chars, OR 2+ headings, OR a code block, OR a table (≥3 rows), OR 3+ checkboxes, OR an explicit mermaid/`to-html` block. Manual `/to-html` toggle bypasses the gate so the response you were already looking at always renders.
+- **Auto-open default is `false`.** The skill no longer asks the auto-open question. Enable it with `/to-html config auto-open yes`.
+- **Typography overhaul.** Reading-first defaults: 18px, line-height ~1.62, 66ch measure. Dropped the prose template's drop cap, roman-numeral section counters, all-small-caps first lines, paragraph indents, and end-mark.
+- **`buildShell` slots** (`tldrHtml`, `mapHtml`, `chromeHtml`, `uiDefaults`). TL;DR + map + chrome are resolved once in `bin/render.js` and emitted by the shell, not by individual templates. Templates render their body accent only.
+- **`renderSvg` extracted** to `lib/svg-graph.js` so the diagram template and the universal map share one renderer.
+- **State schema v4.** New fields: `autoOpen` (boolean, default `false`), `uiDefaults`, `renderThreshold`, `modeChangedAt`. v3 files migrate automatically; the v3 `activePlan` reset still runs.
+
+### Files
+- New: `lib/summary.js`, `lib/section-index.js`, `lib/graph-source.js`, `lib/svg-graph.js`, `lib/templates/parts.js`, `bin/prompt-hook.js`, `assets/map.css`, `assets/map-runtime.js`, `assets/chrome.css`, `assets/chrome-runtime.js`.
+- Tests: `summary.test.js`, `section-index.test.js`, `graph-source.test.js`, `prompt-hook.test.js`. 102 tests total.
+
 ## v1.1.1
 
 ### Fixed

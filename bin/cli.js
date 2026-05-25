@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 'use strict';
 
-const { readState, writeState } = require('../lib/state');
+const { readState, writeState, DEFAULT_UI, VALID_UI_VALUES } = require('../lib/state');
 const { homeShortcut, resolveCacheRoot } = require('../lib/paths');
 
 const KNOWN_TOGGLE_ARGS = new Set(['on', 'off', 'status', 'reset', 'toggle']);
-const KNOWN_AUTO_OPEN_ARGS = new Set(['yes', 'no', 'true', 'false']);
+const KNOWN_AUTO_OPEN_ARGS = new Set(['yes', 'no', 'true', 'false', 'on', 'off']);
+const CONFIG_KEYS = new Set(['auto-open', 'theme', 'size', 'width', 'font', 'show']);
 
 function parseArg(value, allowed) {
   if (value === undefined || value === null) return null;
   const v = String(value).trim().toLowerCase();
-  if (v === '' || v.length > 16) return null;
+  if (v === '' || v.length > 32) return null;
   if (allowed && !allowed.has(v)) return null;
   return v;
 }
@@ -26,7 +27,7 @@ function fail(message, code = 1) {
 
 function statusLine(state) {
   if (state.mode !== 'on') return 'HTML mode: OFF';
-  const ao = state.autoOpen === null ? 'unset' : (state.autoOpen ? 'yes' : 'no');
+  const ao = state.autoOpen ? 'yes' : 'no';
   return `HTML mode: ON · auto-open: ${ao} · artifacts → ${homeShortcut(resolveCacheRoot())}`;
 }
 
@@ -35,6 +36,7 @@ function snapshot(state, changed) {
     ok: true,
     mode: state.mode,
     autoOpen: state.autoOpen,
+    uiDefaults: state.uiDefaults,
     cwd: state.cwd,
     stateFile: state.__file,
     changed,
@@ -52,7 +54,7 @@ function actionToggle(arg) {
   else target = current.mode === 'on' ? 'off' : 'on';
 
   if (arg === 'reset') {
-    const next = writeState(null, { mode: 'off', autoOpen: null });
+    const next = writeState(null, { mode: 'off', autoOpen: false });
     return emit(snapshot(next, true));
   }
   if (arg === 'status') {
@@ -63,12 +65,40 @@ function actionToggle(arg) {
   return emit(snapshot(next, changed));
 }
 
+function coerceBool(arg) {
+  return arg === 'yes' || arg === 'true' || arg === 'on';
+}
+
 function actionSetAutoOpen(arg) {
-  if (!['yes', 'no', 'true', 'false'].includes(arg)) {
-    fail(`set-auto-open expects "yes" or "no", got "${arg}"`);
+  if (!KNOWN_AUTO_OPEN_ARGS.has(arg)) {
+    fail(`set-auto-open expects yes/no, got "${arg}"`);
   }
-  const wantOpen = arg === 'yes' || arg === 'true';
-  const next = writeState(null, { autoOpen: wantOpen });
+  const next = writeState(null, { autoOpen: coerceBool(arg) });
+  emit(snapshot(next, true));
+}
+
+function actionConfig(key, value) {
+  const k = parseArg(key, CONFIG_KEYS);
+  if (k === null) {
+    fail(`config key must be one of: ${[...CONFIG_KEYS].join(', ')}`);
+  }
+  if (k === 'show') {
+    return emit(snapshot(readState(), false));
+  }
+  const v = parseArg(value);
+  if (v === null) fail(`config ${k} requires a value`);
+
+  if (k === 'auto-open') {
+    if (!KNOWN_AUTO_OPEN_ARGS.has(v)) fail(`auto-open expects yes/no`);
+    return emit(snapshot(writeState(null, { autoOpen: coerceBool(v) }), true));
+  }
+
+  const uiKey = k === 'font' ? 'family' : k;
+  if (!VALID_UI_VALUES[uiKey] || !VALID_UI_VALUES[uiKey].has(v)) {
+    const allowed = VALID_UI_VALUES[uiKey] ? [...VALID_UI_VALUES[uiKey]].join('|') : '?';
+    fail(`config ${k} expects one of: ${allowed}`);
+  }
+  const next = writeState(null, { uiDefaults: { [uiKey]: v } });
   emit(snapshot(next, true));
 }
 
@@ -78,7 +108,7 @@ function actionStatus() {
 }
 
 function main() {
-  const [, , cmd = 'status', rawArg = ''] = process.argv;
+  const [, , cmd = 'status', rawArg = '', rawArg2 = ''] = process.argv;
   const trimmed = String(rawArg).trim();
   try {
     if (cmd === 'toggle') {
@@ -90,6 +120,7 @@ function main() {
       return actionToggle(arg);
     }
     if (cmd === 'set-auto-open') return actionSetAutoOpen(parseArg(rawArg, KNOWN_AUTO_OPEN_ARGS));
+    if (cmd === 'config') return actionConfig(rawArg, rawArg2);
     if (cmd === 'status') return actionStatus();
     fail(`Unknown cli command: ${cmd}`);
   } catch (err) {

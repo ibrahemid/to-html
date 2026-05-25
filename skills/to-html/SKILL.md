@@ -1,61 +1,67 @@
 ---
 name: to-html
-description: Toggle HTML rendering mode for the conversation. When on, every substantive assistant reply is also written to a self-contained HTML file that opens in the browser. Use when the user types /to-html, /html, "turn on html mode", "render this as html", "open this in browser", or wants to read agent output visually instead of in the terminal. If the user types /to-html diag, /to-html debug, /to-html status, /to-html doctor, or asks "why isn't to-html working", run the diagnostic flow instead of toggling.
+description: Toggle HTML rendering mode for the conversation. When on, substantive assistant replies render to a self-contained HTML artifact and the file path is printed inline. Use when the user types /to-html, /html, "turn on html mode", "render this as html", "open this in browser", or wants to read agent output visually. If the user types /to-html diag, /to-html debug, /to-html status, /to-html doctor, or asks "why isn't to-html working", run the diagnostic flow. If the user types /to-html config ..., run the config flow.
 ---
 
-The user invoked `/to-html`. Look at the user's exact text. If it contains the words "diag", "debug", "doctor", or "status" anywhere, run the **diagnostic flow**. Otherwise run the **toggle flow**.
+The user invoked `/to-html`. Inspect their exact text and pick a flow:
 
-## Toggle flow (default)
+- contains `diag`, `debug`, `doctor`, or `status` → **diagnostic flow**
+- starts with `config` (e.g. `/to-html config auto-open yes`) → **config flow**
+- otherwise → **toggle flow**
 
-Run exactly one Bash call:
+## Authoring contract (when mode is on)
+
+When `/to-html` mode is on, lead substantial replies with `**TL;DR:** <one or two sentences>`. When the answer has parts that relate (flow, dependencies, comparison, dataflow), include a fenced ` ```mermaid ` block (`graph TD` or `graph LR`) whose node labels echo your section headings. The renderer hoists the TL;DR into a band and renders the mermaid as an interactive map cross-linked to the body. Trivial replies (under ~600 chars with no structure) render nothing.
+
+## Toggle flow
+
+Run one Bash call:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" toggle
 ```
 
-The script flips state and writes JSON to stdout:
+Print the `message` field from the JSON response as a single line. Nothing else.
 
-```json
-{
-  "ok": true,
-  "mode": "on" | "off",
-  "autoOpen": true | false | null,
-  "changed": true,
-  "message": "<status line>"
-}
+When mode is on, the Stop hook renders the most recent substantive reply (skipping its own toggle status and the auto-open question). A PostToolUse hook on `ExitPlanMode` renders plans as a live dashboard. Toggling off silences both hooks. Auto-open is off by default; the user can enable it with `/to-html config auto-open yes`.
+
+## Config flow
+
+Pass the user's arguments through to the cli. Examples:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config auto-open yes
+node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config theme dark
+node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config size l
+node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config width comfortable
+node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config font sans
+node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config show
 ```
 
-After the call:
+Valid keys and values:
 
-1. If `mode` is `on` and `autoOpen` is `null`, ask the user with the **AskUserQuestion tool** (never plain text). Use:
-   - header: `Auto-open`
-   - question: `Auto-open generated HTML files in your browser after each reply?`
-   - options: `Yes, auto-open` (description: "Each rendered artifact opens in your default browser automatically.") and `No, just print the link` (description: "Print the file:// link; you open it when you want.")
+- `auto-open` — `yes` | `no`
+- `theme` — `auto` | `light` | `dark` | `sepia`
+- `size` — `s` | `m` | `l` | `xl`
+- `width` — `narrow` | `comfortable` | `wide`
+- `font` — `sans` | `serif`
 
-   Map their choice to `yes` or `no` and run:
-
-   ```bash
-   node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" set-auto-open "<yes|no>"
-   ```
-
-2. Print the `message` field as a single line. Nothing else. No headers, no commentary, no closing summary.
-
-When mode is on, the Stop hook renders the **most recent substantive reply** — it automatically skips its own toggle status, the auto-open question, and other trivial chatter, so toggling on mid-conversation renders the response you were already looking at. A PostToolUse hook on `ExitPlanMode` always renders plans as a live dashboard. Toggling off silences both hooks.
+Print the `message` field. If the cli returned `ok: false`, print the `error` field as the one line.
 
 ## Diagnostic flow
 
-Run exactly one Bash call:
+Run:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/bin/diagnose.js"
 ```
 
-Print the script's output verbatim. Add no commentary unless the user explicitly asks for interpretation.
+Print the output verbatim.
 
-If the output's `recent hook events` section says `(none yet)`, tell the user verbatim:
+If `recent hook events` is `(none yet)`:
 
 > The Stop hook hasn't fired since this CC session started. Run `/reload-plugins`. If that doesn't help, restart Claude Code. After that, ask any question, then run `/to-html diag` again to confirm.
 
-If hook events exist but all show `mode=off`, tell them: HTML mode is OFF. Run `/to-html` to enable.
+If hook events exist but all show `mode=off`: HTML mode is OFF. Run `/to-html` to enable.
 
 If events show errors, surface the most recent error and stop.

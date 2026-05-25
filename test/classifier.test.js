@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { classify, extractOverride, MAX_OVERRIDE_BYTES } = require('../lib/classifier');
+const { classify, extractOverride, MAX_OVERRIDE_BYTES, shouldRender, countSignals } = require('../lib/classifier');
 
 test('classify: empty markdown skips', () => {
   assert.equal(classify('').template, 'skip');
@@ -97,4 +97,52 @@ test('classify: code block alone is not skipped', () => {
 test('classify: huge prose stays prose', () => {
   const md = 'lorem '.repeat(2000);
   assert.equal(classify(md).template, 'prose');
+});
+
+test('shouldRender: short flat reply is gated out', () => {
+  const md = 'A short paragraph with one sentence and a tail.';
+  const sig = countSignals(md);
+  const gate = shouldRender(sig, md);
+  assert.equal(gate.render, false);
+  assert.equal(gate.reason, 'gate:short-flat');
+});
+
+test('shouldRender: long enough by chars alone passes', () => {
+  const md = 'a '.repeat(400);
+  const sig = countSignals(md);
+  const gate = shouldRender(sig, md);
+  assert.equal(gate.render, true);
+  assert.equal(gate.reason, 'length');
+});
+
+test('shouldRender: two headings pass even on short content', () => {
+  const md = '## A\n\nshort\n\n## B\n\nshort';
+  const sig = countSignals(md);
+  const gate = shouldRender(sig, md);
+  assert.equal(gate.render, true);
+  assert.equal(gate.reason, 'headings');
+});
+
+test('shouldRender: any code block passes', () => {
+  const md = 'short\n\n```js\nx\n```\n';
+  const sig = countSignals(md);
+  const gate = shouldRender(sig, md);
+  assert.equal(gate.render, true);
+  assert.equal(gate.reason, 'code');
+});
+
+test('shouldRender: explicit mermaid block passes', () => {
+  const md = 'short text\n\n```mermaid\ngraph TD\nA-->B\n```\n';
+  const sig = countSignals(md);
+  const gate = shouldRender(sig, md);
+  assert.equal(gate.render, true);
+});
+
+test('shouldRender: custom thresholds override defaults', () => {
+  const md = 'a '.repeat(300);
+  const sig = countSignals(md);
+  const strict = shouldRender(sig, md, { minChars: 1500 });
+  assert.equal(strict.render, false);
+  const lax = shouldRender(sig, md, { minChars: 100 });
+  assert.equal(lax.render, true);
 });

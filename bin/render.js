@@ -3,8 +3,12 @@
 
 const path = require('path');
 const { sessionArtifactsDir, safeSessionSegment } = require('../lib/paths');
-const { classify } = require('../lib/classifier');
+const { classify, shouldRender } = require('../lib/classifier');
 const { dispatchRender } = require('../lib/templates/dispatch');
+const { extractSummary } = require('../lib/summary');
+const { buildSectionIndex } = require('../lib/section-index');
+const { resolveGraph } = require('../lib/graph-source');
+const { renderTldrBand, renderMapSection, renderChrome } = require('../lib/templates/parts');
 const { openInBrowser, clickableUrl } = require('../lib/open');
 const { readJsonStdin, writeFileAtomic } = require('../lib/io');
 
@@ -48,6 +52,10 @@ async function render(input) {
   const turnIndex = clampTurnIndex(input.turnIndex);
   const project = typeof input.project === 'string' ? input.project : '';
   const autoOpen = input.autoOpen === true;
+  const trigger = input.trigger === 'manual' ? 'manual' : 'auto';
+  const renderThreshold = (input.renderThreshold && typeof input.renderThreshold === 'object')
+    ? input.renderThreshold
+    : null;
 
   if (!markdown || !markdown.trim()) {
     return { ok: true, skipped: true, reason: 'empty-markdown' };
@@ -60,12 +68,32 @@ async function render(input) {
   }
 
   const sourceMarkdown = classification.source || markdown;
+
+  if (trigger !== 'manual') {
+    const gate = shouldRender(classification.signals, sourceMarkdown, renderThreshold);
+    if (!gate.render) {
+      return { ok: true, skipped: true, reason: gate.reason, template: classification.template };
+    }
+  }
+
+  const { tldr, body: bodyAfterTldr } = extractSummary(sourceMarkdown);
+  const { sections, annotatedMarkdown } = buildSectionIndex(bodyAfterTldr);
+  const resolvedGraph = resolveGraph(annotatedMarkdown, sections);
+  const tldrHtml = renderTldrBand(tldr);
+  const mapHtml = renderMapSection({ graph: resolvedGraph, sections });
+  const uiDefaults = (input.uiDefaults && typeof input.uiDefaults === 'object') ? input.uiDefaults : null;
+  const chromeHtml = renderChrome({ uiDefaults, sections });
+
   const rendered = dispatchRender({
     template: classification.template,
-    markdown: sourceMarkdown,
+    markdown: annotatedMarkdown,
     meta: { turnIndex, sessionId, project },
     signals: classification.signals,
-    override: classification.override
+    override: classification.override,
+    tldrHtml,
+    mapHtml,
+    chromeHtml,
+    uiDefaults
   });
 
   const dir = sessionArtifactsDir(sessionId);

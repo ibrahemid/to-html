@@ -60,7 +60,11 @@ async function renderPlan(input) {
     meta: { sessionId, project },
     override: titleOverride ? { title: titleOverride } : null,
     buildShell,
-    readAsset
+    readAsset,
+    tldrHtml: '',
+    mapHtml: '',
+    chromeHtml: '',
+    uiDefaults: state.uiDefaults
   });
 
   writeFileAtomic(fullPath, rendered.html);

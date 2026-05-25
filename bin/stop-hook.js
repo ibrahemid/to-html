@@ -154,6 +154,13 @@ async function main() {
   const sessionId = payload.session_id || payload.sessionId || 'unknown';
   const projectName = cwd ? path.basename(cwd) : '';
 
+  const window = (state.renderThreshold && Number.isFinite(state.renderThreshold.manualToggleWindowMs))
+    ? state.renderThreshold.manualToggleWindowMs
+    : 8000;
+  const modeChangedAt = state.modeChangedAt ? Date.parse(state.modeChangedAt) : 0;
+  const isManual = modeChangedAt > 0 && (Date.now() - modeChangedAt) <= window;
+  const trigger = isManual ? 'manual' : 'auto';
+
   const messages = [];
 
   try {
@@ -162,12 +169,16 @@ async function main() {
       sessionId,
       turnIndex,
       project: projectName,
-      autoOpen: state.autoOpen === true
+      autoOpen: state.autoOpen === true,
+      trigger,
+      renderThreshold: state.renderThreshold,
+      uiDefaults: state.uiDefaults
     });
     appendEvent({
       kind: 'stop',
       mode: 'on',
       cwd,
+      trigger,
       template: result.template || (result.skipped ? 'skip' : null),
       skipped: !!result.skipped,
       reason: result.reason,
