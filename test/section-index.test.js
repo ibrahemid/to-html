@@ -42,3 +42,15 @@ test('slugify: strips non-alphanumerics, truncates', () => {
   assert.equal(slugify('Hello, World!', 1), 's-1-hello-world');
   assert.equal(slugify('', 5), 's-5-section');
 });
+
+test('buildSectionIndex: a ``` line inside a ~~~ block does not drop later headings', () => {
+  const md = '## A\n\n~~~\n```\n~~~\n\n## B\n\n## C';
+  const { sections } = buildSectionIndex(md);
+  assert.deepEqual(sections.map(s => s.text), ['A', 'B', 'C']);
+});
+
+test('buildSectionIndex: headings inside a normal ``` block are still excluded', () => {
+  const md = '## Real\n\n```\n## NotAHeading\n```\n\n## AlsoReal';
+  const { sections } = buildSectionIndex(md);
+  assert.deepEqual(sections.map(s => s.text), ['Real', 'AlsoReal']);
+});

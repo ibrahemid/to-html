@@ -60,3 +60,14 @@ test('isGraphStatement: false for prose and blank lines', () => {
   assert.equal(isGraphStatement(''), false);
   assert.equal(isGraphStatement('   '), false);
 });
+
+test('salvageBareGraph: a mismatched ~~~ inside a ``` block does not expose a graph', () => {
+  const md = '```\ncode line\n~~~\ngraph TD\nA --> B\nB --> C\nA --> C\n```';
+  assert.equal(salvageBareGraph(md), null);
+});
+
+test('salvageBareGraph: recognizes a bare flowchart header', () => {
+  const out = salvageBareGraph('flowchart TD\nA --> B\nB --> C\nA --> C');
+  assert.ok(out);
+  assert.ok(out.source.startsWith('flowchart TD'));
+});
