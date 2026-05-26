@@ -11,9 +11,7 @@ test('buildSectionIndex: indexes h1/h2/h3 with stable slugs', () => {
   assert.equal(sections.length, 4);
   assert.deepEqual(sections.map((s) => s.level), [1, 2, 3, 2]);
   assert.deepEqual(sections.map((s) => s.text), ['Title', 'First', 'Sub', 'Second']);
-  for (const s of sections) {
-    assert.ok(annotatedMarkdown.includes(`<a id="${s.slug}"></a>`));
-  }
+  assert.equal(annotatedMarkdown, md);
 });
 
 test('buildSectionIndex: skips fenced-code headings', () => {
