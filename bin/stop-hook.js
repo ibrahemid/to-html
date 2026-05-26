@@ -12,6 +12,7 @@ const { appendEvent } = require('../lib/diag');
 const { classify } = require('../lib/classifier');
 
 const MAX_TRANSCRIPT_LINE_BYTES = 1 * 1024 * 1024;
+const MAX_TRANSCRIPT_BYTES = 64 * 1024 * 1024;
 const RETRY_DELAY_MS = 500;
 const RETRY_MIN_CHARS = 400;
 const MAX_RETRIES = 3;
@@ -44,12 +45,26 @@ function stripControlLines(text) {
     .trim();
 }
 
-function collectAssistantTexts(transcriptPath) {
+function collectAssistantTexts(transcriptPath, maxBytes = MAX_TRANSCRIPT_BYTES) {
   if (!transcriptPath || typeof transcriptPath !== 'string') return [];
   if (!fs.existsSync(transcriptPath)) return [];
   let raw;
   try {
-    raw = fs.readFileSync(transcriptPath, 'utf8');
+    const size = fs.statSync(transcriptPath).size;
+    if (size > maxBytes) {
+      const fd = fs.openSync(transcriptPath, 'r');
+      try {
+        const buf = Buffer.alloc(maxBytes);
+        fs.readSync(fd, buf, 0, maxBytes, size - maxBytes);
+        raw = buf.toString('utf8');
+      } finally {
+        fs.closeSync(fd);
+      }
+      const nl = raw.indexOf('\n');
+      if (nl !== -1) raw = raw.slice(nl + 1);
+    } else {
+      raw = fs.readFileSync(transcriptPath, 'utf8');
+    }
   } catch (_) {
     return [];
   }

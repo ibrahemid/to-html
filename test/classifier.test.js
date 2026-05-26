@@ -167,3 +167,21 @@ test('classify: an unfenced meaningful graph is not skipped', () => {
 test('classify: a trivial reply is still skipped', () => {
   assert.equal(classify('ok, done.').template, 'skip');
 });
+
+test('classify: pathological override fence does not hang (ReDoS guard)', () => {
+  const md = '```to-html\n' + '\n'.repeat(200000) + 'x';
+  const start = Date.now();
+  classify(md);
+  assert.ok(Date.now() - start < 200, 'classify must not backtrack-hang');
+});
+
+test('extractOverride: still extracts a valid override block after the regex fix', () => {
+  const { override } = extractOverride('```to-html\n{"template":"comparison"}\n```\n\n## Option A\n\n- x\n\n## Option B\n\n- y');
+  assert.ok(override);
+  assert.equal(override.template, 'comparison');
+});
+
+test('classify: TL;DR inside a code block does not force explainer', () => {
+  const md = '# Architecture\n\n```javascript\n// TLDR: important note\nfunction foo() {}\n```\n\nA reasonably long prose paragraph describing the architecture in enough words to classify.';
+  assert.equal(classify(md).template, 'prose');
+});

@@ -131,3 +131,17 @@ test('resolveTarget returns a fresh substantive reply immediately when no lastHa
   assert.ok(target.text.startsWith('# New answer'));
   assert.equal(target.retries, 0);
 });
+
+test('collectAssistantTexts: caps total bytes and still returns the latest entry', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-th-cap-'));
+  const file = path.join(dir, 't.jsonl');
+  const filler = JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'x'.repeat(500) }] } });
+  const last = JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: 'LAST-ENTRY' }] } });
+  const lines = [];
+  for (let i = 0; i < 200; i++) lines.push(filler);
+  lines.push(last);
+  fs.writeFileSync(file, lines.join('\n') + '\n');
+  const out = collectAssistantTexts(file, 2048);
+  assert.ok(out.length >= 1);
+  assert.ok(out[out.length - 1].includes('LAST-ENTRY'));
+});

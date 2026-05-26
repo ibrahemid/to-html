@@ -47,3 +47,25 @@ test('extractSummary: case-insensitive and tldr variant', () => {
   const { tldr } = extractSummary(md);
   assert.equal(tldr, 'lowercase works.');
 });
+
+test('extractSummary: ignores ## TL;DR inside a code fence', () => {
+  const md = '## Real\n\nBody.\n\n```\n## TL;DR\n\nFake summary.\n```\n\nAfter.';
+  const { tldr, body } = extractSummary(md);
+  assert.equal(tldr, null);
+  assert.ok(body.includes('## TL;DR'));
+  assert.ok(body.includes('Fake summary.'));
+});
+
+test('extractSummary: ignores **TL;DR:** inside a code fence', () => {
+  const md = 'Intro paragraph.\n\n```\n**TL;DR:** not a real summary\n```\n\nMore prose.';
+  assert.equal(extractSummary(md).tldr, null);
+});
+
+test('extractSummary: still extracts a real leading TL;DR (regression)', () => {
+  assert.equal(extractSummary('**TL;DR:** the real one.\n\nBody.').tldr, 'the real one.');
+});
+
+test('extractSummary: still extracts a real ## TL;DR heading (regression)', () => {
+  const { tldr } = extractSummary('## TL;DR\n\nThe summary line.\n\n## Details\n\nBody.');
+  assert.equal(tldr, 'The summary line.');
+});
