@@ -4,6 +4,13 @@
   function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
   function $(sel, root) { return (root || document).querySelector(sel); }
 
+  function inMapInteractive(el) {
+    if (!el) return false;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return true;
+    if (el.isContentEditable) return true;
+    return el.closest('[role="slider"],[role="radio"],[role="combobox"],[role="textbox"],[role="spinbutton"]') != null;
+  }
+
   function cssEscape(value) {
     if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(value);
     return String(value).replace(/[^a-zA-Z0-9_-]/g, function (c) { return '\\' + c; });
@@ -69,7 +76,9 @@
     return frag;
   }
 
-  function openDetailPanel(slug) {
+  var _detailActivator = null;
+
+  function openDetailPanel(slug, activator) {
     var panel = document.getElementById('cc-detail-panel');
     if (!panel) return;
     var anchor = document.getElementById(slug);
@@ -79,6 +88,7 @@
     if (!body) return;
     clearChildren(body);
     if (content) body.appendChild(content);
+    _detailActivator = activator || null;
     panel.hidden = false;
     anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
     var target = anchor.nextElementSibling;
@@ -86,11 +96,21 @@
       target.classList.add('cc-section-flash');
       setTimeout(function () { target.classList.remove('cc-section-flash'); }, 1400);
     }
+    var closeBtn = panel.querySelector('.cc-detail-close');
+    if (closeBtn) {
+      closeBtn.focus();
+    } else {
+      if (!panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
+      panel.focus();
+    }
   }
 
   function closeDetailPanel() {
     var panel = document.getElementById('cc-detail-panel');
     if (panel) panel.hidden = true;
+    var activator = _detailActivator;
+    _detailActivator = null;
+    if (activator && activator.isConnected) activator.focus();
   }
 
   function wireSvgInteractions(svg) {
@@ -114,7 +134,7 @@
         if (target) {
           locked = id;
           focusNode(svg, id, adj);
-          openDetailPanel(target);
+          openDetailPanel(target, node);
           return;
         }
         if (locked === id) {
@@ -208,7 +228,7 @@
     }
 
     document.addEventListener('keydown', function (ev) {
-      if (ev.target && /^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+      if (inMapInteractive(ev.target)) return;
       if (ev.key === '+' || ev.key === '=') { state.scale = Math.min(4, state.scale * 1.15); apply(); }
       else if (ev.key === '-') { state.scale = Math.max(0.4, state.scale / 1.15); apply(); }
       else if (ev.key === '0') { state.scale = 1; state.tx = 0; state.ty = 0; apply(); }

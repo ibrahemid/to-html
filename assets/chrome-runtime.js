@@ -46,20 +46,65 @@
     return out;
   }
 
+  function inInteractive(el) {
+    if (!el) return false;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return true;
+    if (el.isContentEditable) return true;
+    return el.closest('[role="slider"],[role="radio"],[role="combobox"],[role="textbox"],[role="spinbutton"]') != null;
+  }
+
+  function getFocusable(container) {
+    return Array.from(container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      .filter(function (el) { return !el.disabled && el.offsetParent !== null; });
+  }
+
   function wireGear(state) {
     var toggle = $('.cc-gear-toggle');
     var panel = $('.cc-gear-panel');
     if (!toggle || !panel) return;
+
+    function openPanel() {
+      panel.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      var focusable = getFocusable(panel);
+      if (focusable.length > 0) focusable[0].focus();
+    }
+
+    function closePanel() {
+      panel.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.focus();
+    }
+
     toggle.addEventListener('click', function () {
-      var open = panel.hidden === false;
-      panel.hidden = open;
-      toggle.setAttribute('aria-expanded', String(!open));
+      if (panel.hidden === false) closePanel();
+      else openPanel();
     });
+
     document.addEventListener('click', function (ev) {
       if (panel.hidden) return;
       if (ev.target.closest('.cc-gear-panel') || ev.target.closest('.cc-gear-toggle')) return;
-      panel.hidden = true;
-      toggle.setAttribute('aria-expanded', 'false');
+      closePanel();
+    });
+
+    document.addEventListener('keydown', function (ev) {
+      if (panel.hidden) return;
+      if (ev.key === 'Escape') {
+        ev.stopPropagation();
+        closePanel();
+        return;
+      }
+      if (ev.key === 'Tab') {
+        var focusable = getFocusable(panel);
+        if (focusable.length === 0) { ev.preventDefault(); return; }
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (ev.shiftKey) {
+          if (document.activeElement === first) { ev.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { ev.preventDefault(); first.focus(); }
+        }
+      }
     });
 
     UI_KEYS.forEach(function (k) {
@@ -91,8 +136,9 @@
     if (!input) return;
 
     document.addEventListener('keydown', function (ev) {
-      if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+      if (inInteractive(ev.target)) return;
       if (ev.key === '/') {
+        if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
         ev.preventDefault();
         input.focus();
         input.select();
@@ -168,7 +214,7 @@
     next.addEventListener('click', function () { go(1); });
 
     document.addEventListener('keydown', function (ev) {
-      if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+      if (inInteractive(ev.target)) return;
       if (ev.key === 'j' || ev.key === 'ArrowRight') { ev.preventDefault(); go(1); }
       else if (ev.key === 'k' || ev.key === 'ArrowLeft') { ev.preventDefault(); go(-1); }
     });
