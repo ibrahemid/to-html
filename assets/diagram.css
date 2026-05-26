@@ -92,7 +92,12 @@ body.tpl-dgm {
 .tpl-dgm .node {
   cursor: pointer;
   transition: opacity 200ms ease, transform 220ms cubic-bezier(.2,.7,.2,1);
-  outline: none;
+  outline: 2px solid transparent;
+}
+
+.tpl-dgm .node:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .tpl-dgm .node-shape {
@@ -201,4 +206,14 @@ body.tpl-dgm {
 @media (max-width: 720px) {
   body.tpl-dgm { padding: 40px 20px 80px; }
   .tpl-dgm .diagram-canvas { padding: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tpl-dgm .node,
+  .tpl-dgm .node-shape,
+  .tpl-dgm .edge-line,
+  .tpl-dgm .arrow-head {
+    transition: none !important;
+    animation: none !important;
+  }
 }

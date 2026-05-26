@@ -55,7 +55,12 @@
 .cc-map .node {
   cursor: pointer;
   transition: opacity 200ms ease, transform 220ms cubic-bezier(.2,.7,.2,1);
-  outline: none;
+  outline: 2px solid transparent;
+}
+
+.cc-map .node:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .cc-map .node-shape {
@@ -248,4 +253,15 @@
 @keyframes cc-flash {
   0%   { background: var(--accent-soft); }
   100% { background: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-map .node,
+  .cc-map .node-shape,
+  .cc-map .edge-line,
+  .cc-map .arrow-head {
+    transition: none !important;
+    animation: none !important;
+  }
+  .cc-section-flash { animation: none !important; }
 }

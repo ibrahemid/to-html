@@ -1,3 +1,30 @@
+:root {
+  --status-pending: var(--fg-faint);
+  --status-in-progress: #b45309;
+  --status-completed: #047857;
+  --status-failed: #b91c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --status-in-progress: #fbbf24;
+    --status-completed: #34d399;
+    --status-failed: #f87171;
+  }
+}
+
+:root[data-theme="dark"] {
+  --status-in-progress: #fbbf24;
+  --status-completed: #34d399;
+  --status-failed: #f87171;
+}
+
+:root[data-theme="sepia"] {
+  --status-in-progress: #92400e;
+  --status-completed: #065f46;
+  --status-failed: #991b1b;
+}
+
 body.tpl-plan {
   max-width: 1180px;
   margin: 0 auto;
@@ -80,10 +107,10 @@ body.tpl-plan {
   font-size: 0.875rem;
 }
 
-.tpl-plan .st-pending .glyph, .tpl-plan .st-pending .status-glyph { color: var(--fg-faint); }
-.tpl-plan .st-in-progress .glyph, .tpl-plan .st-in-progress .status-glyph { color: #f59e0b; }
-.tpl-plan .st-completed .glyph, .tpl-plan .st-completed .status-glyph { color: #10b981; }
-.tpl-plan .st-failed .glyph, .tpl-plan .st-failed .status-glyph { color: #ef4444; }
+.tpl-plan .st-pending .glyph, .tpl-plan .st-pending .status-glyph { color: var(--status-pending); }
+.tpl-plan .st-in-progress .glyph, .tpl-plan .st-in-progress .status-glyph { color: var(--status-in-progress); }
+.tpl-plan .st-completed .glyph, .tpl-plan .st-completed .status-glyph { color: var(--status-completed); }
+.tpl-plan .st-failed .glyph, .tpl-plan .st-failed .status-glyph { color: var(--status-failed); }
 
 .tpl-plan .plan-shell {
   display: grid;
@@ -397,4 +424,13 @@ body.tpl-plan {
 @media (max-width: 880px) {
   .tpl-plan .plan-shell { grid-template-columns: 1fr; }
   .tpl-plan .plan-side { position: static; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tpl-plan .summary-bar .fill,
+  .tpl-plan .phase-toc a,
+  .tpl-plan .task-note-btn,
+  .tpl-plan .decision-bar button {
+    transition: none !important;
+  }
 }

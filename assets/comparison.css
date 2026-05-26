@@ -182,8 +182,8 @@ body.tpl-cmp {
   margin-bottom: 6px;
 }
 
-.tpl-cmp .hint-pros .hint-label { color: rgb(5, 150, 105); }
-.tpl-cmp .hint-cons .hint-label { color: rgb(220, 38, 38); }
+.tpl-cmp .hint-pros .hint-label { color: #047857; }
+.tpl-cmp .hint-cons .hint-label { color: #b91c1c; }
 
 @media (prefers-color-scheme: dark) {
   .tpl-cmp .hint-pros { background: rgba(16, 185, 129, 0.15); }
@@ -282,4 +282,12 @@ body.tpl-cmp {
   font-family: var(--mono);
   font-size: 0.8125rem;
   color: var(--fg-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tpl-cmp .opt,
+  .tpl-cmp .opt-index,
+  .tpl-cmp .decision-bar button {
+    transition: none !important;
+  }
 }
