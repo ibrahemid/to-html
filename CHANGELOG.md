@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.0.2
+
+### Fixed
+- **Unfenced `graph TD/LR` blocks now render as the concept map instead of printing as raw text.** The map only ever resolved from a fenced ```` ```mermaid ```` block; a bare graph fell through to prose and showed its source. The renderer now salvages an unfenced graph (scan for the `graph` header, collect the contiguous statement lines, accept only if it forms a meaningful shape), lifts it into the map, and strips the source from the body. Salvage runs only when no fenced block is present and is gated by the same meaningful-shape check, so prose that merely mentions a graph is unaffected.
+
 ## v2.0.1
 
 ### Fixed
