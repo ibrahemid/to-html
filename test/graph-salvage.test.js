@@ -1,0 +1,44 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const { salvageBareGraph } = require('../lib/graph-salvage');
+
+test('salvageBareGraph: finds an unfenced graph block and its span', () => {
+  const md = 'Intro line.\n\ngraph TD\nA --> B\nB --> C\nA --> C\n\nAfter text.';
+  const out = salvageBareGraph(md);
+  assert.ok(out);
+  assert.equal(out.startLine, 2);
+  assert.equal(out.endLine, 5);
+  assert.equal(out.source, 'graph TD\nA --> B\nB --> C\nA --> C');
+});
+
+test('salvageBareGraph: returns null when there is no graph header', () => {
+  assert.equal(salvageBareGraph('# Title\n\nJust prose, no diagram.'), null);
+});
+
+test('salvageBareGraph: ignores a graph header inside a code fence', () => {
+  const md = '```js\ngraph TD\nA --> B\n```';
+  assert.equal(salvageBareGraph(md), null);
+});
+
+test('salvageBareGraph: stops at a blank line', () => {
+  const md = 'graph LR\nA --> B\n\nC --> D';
+  const out = salvageBareGraph(md);
+  assert.equal(out.endLine, 1);
+  assert.equal(out.source, 'graph LR\nA --> B');
+});
+
+test('salvageBareGraph: stops at a prose line', () => {
+  const md = 'graph TD\nA --> B\nthis is regular prose.';
+  const out = salvageBareGraph(md);
+  assert.equal(out.endLine, 1);
+});
+
+test('salvageBareGraph: keeps node decls with labels and directives', () => {
+  const md = 'graph LR\nA[Start] --> B[Mid]\nB --> C[End]';
+  const out = salvageBareGraph(md);
+  assert.equal(out.endLine, 2);
+  assert.ok(out.source.includes('A[Start] --> B[Mid]'));
+});
