@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { resolveGraph, hasMeaningfulShape, mapNodesToSections } = require('../lib/graph-source');
+const { resolveGraph, hasMeaningfulShape, mapNodesToSections, hasSalvageableGraph } = require('../lib/graph-source');
 
 test('resolveGraph: returns null when no mermaid block exists', () => {
   const md = '# Title\n\nNo graph here.\n\n## Section';
@@ -64,8 +64,6 @@ test('mapNodesToSections: handles fuzzy contains match', () => {
   assert.equal(out.get('X'), 's-1');
 });
 
-const { hasSalvageableGraph } = require('../lib/graph-source');
-
 test('resolveGraph: salvages an unfenced graph with source=salvage and a span', () => {
   const md = 'Here is the flow:\n\ngraph TD\nA --> B\nA --> C\nB --> D\n\nThat is it.';
   const out = resolveGraph(md, []);
@@ -92,4 +90,12 @@ test('hasSalvageableGraph: true for a meaningful unfenced graph', () => {
 
 test('hasSalvageableGraph: false for prose merely mentioning a graph', () => {
   assert.equal(hasSalvageableGraph('We considered the graph TD approach but dropped it.'), false);
+});
+
+test('resolveGraph: salvages a bare graph when the fenced block is too small', () => {
+  const md = '```mermaid\ngraph TD\nA --> B\n```\n\ngraph LR\nX --> Y\nY --> Z\nX --> Z';
+  const out = resolveGraph(md, []);
+  assert.ok(out);
+  assert.equal(out.source, 'salvage');
+  assert.ok(out.graph.nodes.length >= 3);
 });
