@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.0.3
+
+### Fixed
+- **Concept-map click-to-section restored.** Clicking a map node had stopped scrolling to its section and opening the detail panel: the section anchor ids were injected as raw HTML that the renderer stripped, so the targets never existed in the page. Heading ids are now applied to the rendered headings directly, and the detail panel reads the matching section.
+- **Security: ReDoS in the ```to-html override fence.** A reply or transcript line with many newlines and no closing fence could make classification backtrack for minutes and stall the Stop hook. The fence pattern is now linear, and an oversized transcript is capped so it can't exhaust memory.
+- **`flowchart TD/LR`** (Mermaid v9+ keyword) now renders instead of producing stray nodes.
+- **`TL;DR` inside code blocks** no longer changes the layout or gets hoisted out of the body.
+- **Cyclic graphs** lay out without parking downstream nodes at the top; a pure cycle is still left unrendered.
+- **Mixed code fences** (```` ``` ```` vs `~~~`) are tracked by delimiter, so a nested fence no longer drops heading anchors or salvages a graph from inside a code block.
+- **Windows `file://` links** keep the drive-letter colon and handle UNC paths.
+
+### Accessibility
+- Concept-map nodes are reachable by screen readers (removed the `role="img"` that hid them) and show a visible keyboard focus ring.
+- Focus moves into the settings and detail panels on open and returns on close; Escape closes them; Tab is trapped within the settings panel.
+- Reading-order and zoom keyboard shortcuts no longer intercept screen-reader or browser navigation.
+- Added a `<main>` landmark, labelled the plan and comparison controls, and removed duplicate landmark labels.
+- Body, status, and muted text meet WCAG AA contrast across light, dark, and sepia themes; animations respect `prefers-reduced-motion`.
+
 ## v2.0.2
 
 ### Fixed
