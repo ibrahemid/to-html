@@ -146,3 +146,24 @@ test('shouldRender: custom thresholds override defaults', () => {
   const lax = shouldRender(sig, md, { minChars: 100 });
   assert.equal(lax.render, true);
 });
+
+test('shouldRender: passes an unfenced meaningful graph with reason graph-salvage', () => {
+  const md = 'graph TD\nA --> B\nB --> C\nA --> C';
+  const r = shouldRender(countSignals(md), md);
+  assert.equal(r.render, true);
+  assert.equal(r.reason, 'graph-salvage');
+});
+
+test('shouldRender: prose merely mentioning a graph stays gated out', () => {
+  const md = 'We considered the graph TD approach but dropped it.';
+  const r = shouldRender(countSignals(md), md);
+  assert.equal(r.render, false);
+});
+
+test('classify: an unfenced meaningful graph is not skipped', () => {
+  assert.notEqual(classify('graph TD\nA --> B\nB --> C\nA --> C').template, 'skip');
+});
+
+test('classify: a trivial reply is still skipped', () => {
+  assert.equal(classify('ok, done.').template, 'skip');
+});
