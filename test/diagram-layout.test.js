@@ -12,9 +12,11 @@ test('layout: cycle reachable from a DAG root keeps downstream nodes off rank 0'
   assert.ok(placed.nodes.every(n => Number.isFinite(n.rank)));
 });
 
-test('layout: pure cycle terminates with finite ranks (no hang)', () => {
+test('layout: pure cycle stays at rank 0 (rejected as not meaningful), no hang', () => {
   const placed = layout(parseGraph('graph TD\nA --> B\nB --> C\nC --> A'));
   assert.ok(placed.nodes.every(n => Number.isFinite(n.rank)));
+  const maxRank = Math.max(...placed.nodes.map(n => n.rank));
+  assert.equal(maxRank, 0);
 });
 
 test('layout: plain DAG ranks unchanged', () => {
