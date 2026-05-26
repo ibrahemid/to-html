@@ -86,3 +86,15 @@ test('render: unknown override template falls back', async () => {
   const r = await render({ markdown: md, sessionId: 'test', turnIndex: 9, autoOpen: false });
   assert.notEqual(r.template, 'evil');
 });
+
+test('render: salvages a bare (unfenced) graph into a map and strips the source', async () => {
+  const md = '# System flow\n\n' +
+    'The parts connect end to end across the pipeline as described here. '.repeat(4) +
+    '\n\ngraph TD\nIngest --> Parse\nParse --> Render\nRender --> Output';
+  const r = await render({ markdown: md, sessionId: 'test', turnIndex: 10, autoOpen: false, trigger: 'manual' });
+  assert.equal(r.skipped, false);
+  const html = fs.readFileSync(r.path, 'utf8');
+  assert.ok(!html.includes('graph TD'));
+  assert.ok(!html.includes('Ingest --'));
+  assert.ok(html.includes('Ingest'));
+});
