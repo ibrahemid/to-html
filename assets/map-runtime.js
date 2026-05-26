@@ -57,7 +57,7 @@
   }
 
   function collectSectionContent(anchor) {
-    var heading = anchor.nextElementSibling;
+    var heading = /^H[1-6]$/.test(anchor.tagName) ? anchor : anchor.nextElementSibling;
     while (heading && !/^H[1-6]$/.test(heading.tagName)) heading = heading.nextElementSibling;
     if (!heading) return null;
     var frag = document.createDocumentFragment();
