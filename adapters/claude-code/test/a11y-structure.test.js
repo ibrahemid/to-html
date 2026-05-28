@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { composeArtifact } = require('../lib/compose');
+const { composeArtifact } = require('../core/lib/compose');
 
 const meta = { turnIndex: 1, sessionId: 't', project: 'p' };
 const countOf = (h, sub) => h.split(sub).length - 1;

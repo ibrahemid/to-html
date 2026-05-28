@@ -3,8 +3,8 @@
 
 const path = require('path');
 const { sessionArtifactsDir, safeSessionSegment } = require('../lib/paths');
-const { classify, shouldRender } = require('../lib/classifier');
-const { composeArtifact } = require('../lib/compose');
+const { classify, shouldRender } = require('../core/lib/classifier');
+const { composeArtifact } = require('../core/lib/compose');
 const { openInBrowser, clickableUrl } = require('../lib/open');
 const { readJsonStdin, writeFileAtomic } = require('../lib/io');
 

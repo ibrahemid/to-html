@@ -3,9 +3,9 @@
 
 const path = require('path');
 const { sessionArtifactsDir, safeSessionSegment } = require('../lib/paths');
-const { parsePlanMarkdown, mergeTaskStatuses, applyStatusFromText } = require('../lib/plan-extractor');
-const planTemplate = require('../lib/templates/plan');
-const { buildShell, readAsset } = require('../lib/templates/dispatch');
+const { parsePlanMarkdown, mergeTaskStatuses, applyStatusFromText } = require('../core/lib/plan-extractor');
+const planTemplate = require('../core/lib/templates/plan');
+const { buildShell, readAsset } = require('../core/lib/templates/dispatch');
 const { openInBrowser, clickableUrl } = require('../lib/open');
 const { readState, writeState } = require('../lib/state');
 const { readJsonStdin, writeFileAtomic } = require('../lib/io');

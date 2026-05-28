@@ -9,7 +9,7 @@ const { render } = require('./render');
 const { renderPlan } = require('./plan-renderer');
 const { readJsonStdin } = require('../lib/io');
 const { appendEvent } = require('../lib/diag');
-const { classify } = require('../lib/classifier');
+const { classify } = require('../core/lib/classifier');
 
 const MAX_TRANSCRIPT_LINE_BYTES = 1 * 1024 * 1024;
 const MAX_TRANSCRIPT_BYTES = 64 * 1024 * 1024;
