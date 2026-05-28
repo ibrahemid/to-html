@@ -1,0 +1,28 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: drift guard (sync-core + sync-version)
+        run: |
+          node scripts/sync-core.js
+          node scripts/sync-version.js
+          git diff --exit-code \
+            adapters/claude-code/core adapters/claude-code/shared \
+            adapters/claude-code/package.json \
+            adapters/claude-code/.claude-plugin/plugin.json \
+            core/package.json cli/package.json shared/transcript/package.json
+      - run: npm run lint
+      - run: npm test --workspaces --if-present
