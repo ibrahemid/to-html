@@ -3,8 +3,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { composeArtifact } = require('../../lib/compose');
-const { classify } = require('../../lib/classifier');
+const { renderMarkdown } = require('../../lib/index');
 
 const FIXED_OPTS = Object.freeze({
   meta: { turnIndex: 1, sessionId: 'test', project: '' },
@@ -13,15 +12,14 @@ const FIXED_OPTS = Object.freeze({
 });
 
 function renderFixture(markdown) {
-  const cls = classify(markdown);
-  if (cls.template === 'skip') return { html: `<!--skip:${cls.reason}-->`, template: 'skip', skipped: true, reason: cls.reason };
-  return composeArtifact({
-    markdown,
-    classification: cls,
+  const r = renderMarkdown(markdown, {
+    trigger: 'manual',
     meta: FIXED_OPTS.meta,
     uiDefaults: FIXED_OPTS.uiDefaults,
     nowIso: FIXED_OPTS.nowIso
   });
+  if (r.skipped) return { html: `<!--skip:${r.reason}-->`, template: r.template, skipped: true, reason: r.reason };
+  return r;
 }
 
 function listFixtures(fixturesDir) {
