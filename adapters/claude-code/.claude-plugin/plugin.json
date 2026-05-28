@@ -1,6 +1,6 @@
 {
   "name": "to-html",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "description": "HTML rendering for Claude Code. `/to-html` toggles it on; substantive replies render as a self-contained artifact with a TL;DR, a concept map (mermaid to SVG with click-to-section, zoom, pan), a reading-order stepper, in-page search, and a settings gear (theme, size, width, font). Quiet by default: short or flat replies render nothing.",
   "author": {
     "name": "ibrahemid",
