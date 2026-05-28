@@ -1,0 +1,1518 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>Explainer</title>
+<style>:root {
+  color-scheme: light dark;
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --accent: #6d28d9;
+  --accent-soft: rgba(109, 40, 217, 0.08);
+  --accent-line: rgba(109, 40, 217, 0.2);
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+  --serif: "Charter", "Iowan Old Style", "Source Serif Pro", "Georgia", "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "JetBrains Mono", "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+  --reading-family: var(--sans);
+  --reading-size: 18px;
+  --reading-leading: 1.62;
+  --reading-measure: 66ch;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"],
+:root[data-theme="sepia"] { color-scheme: dark; }
+
+:root[data-size="s"]  { --reading-size: 16px; }
+:root[data-size="m"]  { --reading-size: 18px; }
+:root[data-size="l"]  { --reading-size: 19.5px; }
+:root[data-size="xl"] { --reading-size: 21px; }
+
+:root[data-width="narrow"]      { --reading-measure: 56ch; }
+:root[data-width="comfortable"] { --reading-measure: 66ch; }
+:root[data-width="wide"]        { --reading-measure: 76ch; }
+
+:root[data-family="serif"] { --reading-family: var(--serif); }
+:root[data-family="sans"]  { --reading-family: var(--sans); }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e10;
+    --bg-elev: #17171a;
+    --bg-sunken: #0a0a0c;
+    --fg: #e8e8ee;
+    --fg-muted: #b3b3bb;
+    --fg-faint: #9e9ea6;
+    --accent: #c4b5fd;
+    --accent-soft: rgba(196, 181, 253, 0.10);
+    --accent-line: rgba(196, 181, 253, 0.28);
+    --border: #26262b;
+    --border-strong: #3a3a40;
+    --code-bg: #1a1a1f;
+    --code-fg: #e8e8ee;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0e10;
+  --bg-elev: #17171a;
+  --bg-sunken: #0a0a0c;
+  --fg: #e8e8ee;
+  --fg-muted: #b3b3bb;
+  --fg-faint: #9e9ea6;
+  --accent: #c4b5fd;
+  --accent-soft: rgba(196, 181, 253, 0.10);
+  --accent-line: rgba(196, 181, 253, 0.28);
+  --border: #26262b;
+  --border-strong: #3a3a40;
+  --code-bg: #1a1a1f;
+  --code-fg: #e8e8ee;
+}
+
+:root[data-theme="light"] {
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+}
+
+:root[data-theme="sepia"] {
+  --bg: #f4ecd8;
+  --bg-elev: #faf3e0;
+  --bg-sunken: #ede2c4;
+  --fg: #4a3a22;
+  --fg-muted: #6b573b;
+  --fg-faint: #6d5d40;
+  --accent: #934f1b;
+  --accent-soft: rgba(147, 79, 27, 0.08);
+  --accent-line: rgba(147, 79, 27, 0.22);
+  --border: #d9c8a3;
+  --border-strong: #c2ad7f;
+  --code-bg: #ebdfc2;
+  --code-fg: #4a3a22;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: var(--reading-size);
+  line-height: var(--reading-leading);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-line);
+  transition: border-color 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a { transition: none !important; }
+  .cc-section-flash { animation: none !important; }
+}
+a:hover { border-bottom-color: var(--accent); }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.875em;
+  background: var(--code-bg);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+pre code { background: transparent; padding: 0; font-size: inherit; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.2em 0;
+  font-size: 0.9375rem;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 2.4em 0;
+}
+
+blockquote {
+  margin: 1.2em 0;
+  padding: 4px 0 4px 20px;
+  border-left: 2px solid var(--accent-line);
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.cc-stamp {
+  position: fixed;
+  bottom: 14px;
+  left: 16px;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  color: var(--fg-faint);
+  letter-spacing: 0.04em;
+  z-index: 10;
+}
+
+.cc-tldr {
+  max-width: calc(var(--reading-measure) + 80px);
+  margin: 28px auto 0;
+  padding: 18px 22px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 18px;
+  align-items: start;
+}
+
+.cc-tldr-label {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-top: 4px;
+}
+
+.cc-tldr-body {
+  color: var(--fg);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.cc-tldr-body p { margin: 0 0 0.5em; }
+.cc-tldr-body p:last-child { margin-bottom: 0; }
+
+.cc-map {
+  max-width: calc(var(--reading-measure) + 80px);
+  margin: 20px auto 0;
+}
+
+.cc-map-toc {
+  padding: 12px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+}
+
+.cc-toc-rail .cc-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.cc-toc-item a {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--fg-muted);
+  border: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--bg-sunken);
+}
+
+.cc-toc-item a:hover {
+  color: var(--fg);
+  background: var(--accent-soft);
+}
+
+.cc-toc-l1 a { color: var(--fg); font-weight: 600; }
+.cc-toc-l3 a { font-size: 0.92em; }
+
+.cc-map-graph {
+  max-width: calc(var(--reading-measure) + 320px);
+  margin: 24px auto 0;
+}
+
+.cc-map-figure {
+  margin: 0;
+  position: relative;
+}
+
+.cc-map-canvas {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+  cursor: grab;
+}
+
+.cc-map-canvas.is-dragging { cursor: grabbing; }
+
+.cc-map-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.5;
+  border-radius: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .cc-map-canvas::before {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 1px);
+  }
+}
+
+:root[data-theme="dark"] .cc-map-canvas::before {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 1px);
+}
+
+.cc-map .diagram-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 320px;
+  max-height: 720px;
+  position: relative;
+  z-index: 1;
+}
+
+.cc-map .node {
+  cursor: pointer;
+  transition: opacity 200ms ease, transform 220ms cubic-bezier(.2,.7,.2,1);
+  outline: 2px solid transparent;
+}
+
+.cc-map .node:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cc-map .node-shape {
+  fill: var(--bg);
+  stroke: var(--fg-muted);
+  stroke-width: 1.5;
+  transition: fill 220ms ease, stroke 220ms ease, filter 220ms ease;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,0.04));
+}
+
+.cc-map .node-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  fill: var(--fg);
+  pointer-events: none;
+  user-select: none;
+}
+
+.cc-map .node-linked .node-shape {
+  stroke: var(--accent-line);
+}
+
+.cc-map .node:hover .node-shape,
+.cc-map .node:focus .node-shape {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.cc-map .edge-line {
+  stroke: var(--fg-faint);
+  stroke-width: 1.5;
+  fill: none;
+  transition: stroke 220ms ease, stroke-width 220ms ease, opacity 220ms ease;
+}
+
+.cc-map .arrow-head {
+  fill: var(--fg-faint);
+  transition: fill 220ms ease;
+}
+
+.cc-map .edge-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  fill: var(--fg-muted);
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke;
+  stroke: var(--bg-elev);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+.cc-map .diagram-svg.has-focus .node:not(.is-active) .node-shape { fill: var(--bg-elev); opacity: 0.4; }
+.cc-map .diagram-svg.has-focus .node:not(.is-active) .node-label { opacity: 0.4; }
+.cc-map .diagram-svg.has-focus .edge:not(.is-active) .edge-line { opacity: 0.18; }
+.cc-map .diagram-svg.has-focus .edge:not(.is-active) .edge-label { opacity: 0.18; }
+
+.cc-map .node.is-active .node-shape {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.cc-map .node.is-active .node-label { fill: var(--fg); font-weight: 700; }
+
+.cc-map .edge.is-active .edge-line { stroke: var(--accent); stroke-width: 2; }
+.cc-map .edge.is-active .arrow-head { fill: var(--accent); }
+.cc-map .edge.is-active .edge-label { fill: var(--accent); }
+
+.cc-map-controls {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+
+.cc-map-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cc-map-btn:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+.cc-map-meta {
+  margin: 12px 4px 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+}
+
+.cc-map-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.cc-map-stat .num {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.cc-map-stat .lbl {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+}
+
+.cc-map-hint {
+  font-size: 0.74rem;
+  color: var(--fg-faint);
+}
+
+.cc-detail-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: min(440px, calc(100vw - 48px));
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 20px 22px 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+  z-index: 20;
+}
+
+.cc-detail-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.cc-detail-close:hover {
+  background: var(--bg-sunken);
+  color: var(--fg);
+}
+
+.cc-detail-body h1, .cc-detail-body h2, .cc-detail-body h3 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--fg);
+}
+
+.cc-detail-body p {
+  margin: 0 0 0.6em;
+  color: var(--fg-muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.cc-detail-body p:last-child { margin-bottom: 0; }
+
+.cc-section-flash {
+  animation: cc-flash 1.2s ease-out;
+}
+
+@keyframes cc-flash {
+  0%   { background: var(--accent-soft); }
+  100% { background: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-map .node,
+  .cc-map .node-shape,
+  .cc-map .edge-line,
+  .cc-map .arrow-head {
+    transition: none !important;
+    animation: none !important;
+  }
+  .cc-section-flash { animation: none !important; }
+}
+
+.cc-search {
+  position: fixed;
+  top: 14px;
+  left: 20px;
+  z-index: 12;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 4px;
+  opacity: 0.6;
+  transition: opacity 160ms ease, border-color 160ms ease;
+}
+.cc-search:hover, .cc-search:focus-within { opacity: 1; border-color: var(--border-strong); }
+
+.cc-search-input {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-family: var(--mono);
+  color: var(--fg);
+  padding: 6px 14px;
+  width: 240px;
+  outline: none;
+}
+.cc-search-input::placeholder { color: var(--fg-faint); }
+
+.cc-gear-toggle {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  z-index: 12;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--fg-muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cc-gear-toggle:hover { color: var(--fg); border-color: var(--border-strong); }
+
+.cc-gear-panel {
+  position: fixed;
+  top: 52px;
+  right: 16px;
+  z-index: 13;
+  width: 280px;
+  padding: 16px 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+  font-size: 0.82rem;
+}
+
+.cc-fieldset {
+  border: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+.cc-fieldset:last-child { margin-bottom: 0; }
+.cc-fieldset legend {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-muted);
+  padding: 0;
+  margin-bottom: 6px;
+}
+
+.cc-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.cc-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--bg);
+  color: var(--fg-muted);
+  font-size: 0.78rem;
+}
+
+.cc-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.cc-opt:hover { border-color: var(--border-strong); color: var(--fg); }
+.cc-opt:has(input:checked) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.cc-stepper {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+
+.cc-step-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cc-step-btn:hover { background: var(--bg-sunken); color: var(--fg); }
+.cc-step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.cc-step-status {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 6px;
+  max-width: 50vw;
+}
+
+.cc-step-pos {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cc-step-title {
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
+}
+
+body.cc-hide-tldr .cc-tldr { display: none; }
+body.cc-hide-map .cc-map { display: none; }
+body.cc-hide-stepper .cc-stepper { display: none; }
+
+.cc-section-dim { opacity: 0.25; }
+.cc-section-hit { background: var(--accent-soft); border-radius: 4px; }
+
+@media (max-width: 720px) {
+  .cc-search { display: none; }
+  .cc-step-title { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-search,
+  .cc-opt,
+  .tpl-plan .summary-bar .fill {
+    transition: none !important;
+  }
+}
+
+body.tpl-exp {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 64px 32px 96px;
+}
+
+.tpl-exp .exp-head h1 {
+  margin: 0 0 24px;
+  font-family: var(--sans);
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  max-width: 720px;
+}
+
+.tpl-exp .tldr {
+  margin: 0 0 40px;
+  padding: 20px 24px;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  max-width: 720px;
+}
+
+.tpl-exp .tldr-label {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.tpl-exp .tldr-body { font-size: 1rem; line-height: 1.65; color: var(--fg); }
+.tpl-exp .tldr-body p:first-child { margin-top: 0; }
+.tpl-exp .tldr-body p:last-child { margin-bottom: 0; }
+
+.tpl-exp .exp-shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.tpl-exp .exp-toc {
+  position: sticky;
+  top: 32px;
+  align-self: start;
+  font-size: 0.875rem;
+}
+
+.tpl-exp .exp-toc h2 {
+  margin: 0 0 12px;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-muted);
+  font-weight: 700;
+}
+
+.tpl-exp .exp-toc ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  counter-reset: toc;
+}
+
+.tpl-exp .exp-toc li {
+  counter-increment: toc;
+}
+
+.tpl-exp .exp-toc a {
+  display: block;
+  padding: 6px 10px;
+  color: var(--fg-muted);
+  text-decoration: none;
+  border-bottom: none;
+  border-left: 2px solid transparent;
+  transition: color 120ms, border-color 120ms, background 120ms;
+}
+
+.tpl-exp .exp-toc a::before {
+  content: counter(toc, decimal-leading-zero);
+  margin-right: 10px;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  color: var(--fg-faint);
+}
+
+.tpl-exp .exp-toc a:hover,
+.tpl-exp .exp-toc a.active {
+  color: var(--fg);
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.tpl-exp .exp-body {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  max-width: 680px;
+}
+
+.tpl-exp .exp-body h2 {
+  font-size: 1.5rem;
+  margin: 2.4em 0 0.5em;
+  padding-top: 0;
+  letter-spacing: -0.015em;
+  font-weight: 700;
+}
+
+.tpl-exp .exp-body h2:first-child { margin-top: 0; }
+
+.tpl-exp .exp-body h3 {
+  font-size: 1.0625rem;
+  margin: 1.8em 0 0.4em;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.tpl-exp .exp-body p { margin: 0.9em 0; }
+
+.tpl-exp .exp-body details {
+  margin: 1.2em 0;
+  padding: 14px 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tpl-exp .exp-body summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.tpl-exp .exp-body details[open] summary { margin-bottom: 8px; }
+
+.tpl-exp .exp-body table {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin: 1.6em 0;
+}
+
+.tpl-exp .exp-body strong { font-weight: 700; }
+.tpl-exp .exp-body em { font-style: italic; color: var(--fg-muted); }
+
+.tpl-exp .exp-body ul li::marker { color: var(--accent); }
+
+@media (max-width: 880px) {
+  .tpl-exp .exp-shell { grid-template-columns: 1fr; }
+  .tpl-exp .exp-toc { position: static; }
+}
+</style>
+</head>
+<body class="tpl-exp">
+<div class="cc-stamp">turn 1</div>
+<aside class="cc-tldr" role="note" aria-label="TL;DR">
+  <span class="cc-tldr-label">TL;DR</span>
+  <div class="cc-tldr-body"><p>Multiple headings paired with a salvageable bare graph; this fixture locks the v2.0.3 click-to-section fix by exercising heading-id injection.</p>
+</div>
+</aside>
+<section class="cc-map cc-map-graph"><figure class="cc-map-figure">
+  <div class="cc-map-canvas" data-zoomable="1"><svg viewBox="0 0 307 760" preserveAspectRatio="xMidYMid meet" class="diagram-svg" aria-label="Concept map">
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 1 1 L 11 6 L 1 11 z" class="arrow-head" />
+    </marker>
+  </defs>
+  <g class="edges"><g class="edge" aria-hidden="true" data-edge-id="e0" data-from="A" data-to="B">
+      <path d="M 153.5 136 C 153.5 176, 153.5 176, 153.5 216" class="edge-line" marker-end="url(#arrow)" fill="none" />
+      
+    </g>
+<g class="edge" aria-hidden="true" data-edge-id="e1" data-from="B" data-to="C">
+      <path d="M 153.5 272 C 153.5 312, 153.5 312, 153.5 352" class="edge-line" marker-end="url(#arrow)" fill="none" />
+      
+    </g>
+<g class="edge" aria-hidden="true" data-edge-id="e2" data-from="C" data-to="D">
+      <path d="M 153.5 408 C 153.5 448, 153.5 448, 153.5 488" class="edge-line" marker-end="url(#arrow)" fill="none" />
+      
+    </g>
+<g class="edge" aria-hidden="true" data-edge-id="e3" data-from="D" data-to="E">
+      <path d="M 153.5 544 C 153.5 584, 153.5 584, 153.5 624" class="edge-line" marker-end="url(#arrow)" fill="none" />
+      
+    </g></g>
+  <g class="nodes"><g class="node node-linked" data-node-id="A" data-target-section="s-1-overview" tabindex="0" role="button" aria-label="Overview">
+      <rect x="98.5" y="80" width="110" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="153.5" y="113" class="node-label" text-anchor="middle">Overview</text>
+    </g>
+<g class="node node-linked" data-node-id="B" data-target-section="s-2-setup" tabindex="0" role="button" aria-label="Setup">
+      <rect x="98.5" y="216" width="110" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="153.5" y="249" class="node-label" text-anchor="middle">Setup</text>
+    </g>
+<g class="node node-linked" data-node-id="C" data-target-section="s-3-usage" tabindex="0" role="button" aria-label="Usage">
+      <rect x="98.5" y="352" width="110" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="153.5" y="385" class="node-label" text-anchor="middle">Usage</text>
+    </g>
+<g class="node node-linked" data-node-id="D" data-target-section="s-4-reference" tabindex="0" role="button" aria-label="Reference">
+      <rect x="98.5" y="488" width="110" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="153.5" y="521" class="node-label" text-anchor="middle">Reference</text>
+    </g>
+<g class="node node-linked" data-node-id="E" data-target-section="s-5-troubleshooting" tabindex="0" role="button" aria-label="Troubleshooting">
+      <rect x="80" y="624" width="147" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="153.5" y="657" class="node-label" text-anchor="middle">Troubleshooting</text>
+    </g></g>
+</svg></div>
+  <div class="cc-map-controls" role="toolbar" aria-label="Map controls">
+    <button type="button" class="cc-map-btn" data-action="zoom-in" aria-label="Zoom in">+</button>
+    <button type="button" class="cc-map-btn" data-action="zoom-out" aria-label="Zoom out">−</button>
+    <button type="button" class="cc-map-btn" data-action="zoom-reset" aria-label="Reset view">⟲</button>
+  </div>
+  <figcaption class="cc-map-meta">
+    <span class="cc-map-stat"><span class="num">5</span><span class="lbl">nodes</span></span>
+    <span class="cc-map-stat"><span class="num">4</span><span class="lbl">edges</span></span>
+    <span class="cc-map-hint">drag · scroll · click</span>
+  </figcaption>
+  <aside class="cc-detail-panel" id="cc-detail-panel" hidden aria-live="polite">
+    <button type="button" class="cc-detail-close" aria-label="Close detail panel">×</button>
+    <div class="cc-detail-body"></div>
+  </aside>
+</figure></section>
+<main class="cc-main">
+<header class="exp-head"><h1>Explainer</h1></header>
+<article class="exp-body"><h2 id="s-1-overview">Overview</h2>
+<p>What this section is about.</p>
+<h2 id="s-2-setup">Setup</h2>
+<p>Setup steps go here.</p>
+<h2 id="s-3-usage">Usage</h2>
+<p>Usage notes.</p>
+<h2 id="s-4-reference">Reference</h2>
+<p>Reference material.</p>
+<h2 id="s-5-troubleshooting">Troubleshooting</h2>
+<p>Troubleshooting guidance.</p>
+</article>
+</main>
+<script type="application/json" id="cc-sections">[{"slug":"s-1-overview","text":"Overview","level":2},{"slug":"s-2-setup","text":"Setup","level":2},{"slug":"s-3-usage","text":"Usage","level":2},{"slug":"s-4-reference","text":"Reference","level":2},{"slug":"s-5-troubleshooting","text":"Troubleshooting","level":2}]</script>
+<div class="cc-search" role="search">
+  <input type="search" class="cc-search-input" placeholder="Filter sections  ( / )" aria-label="Filter sections">
+</div>
+<button type="button" class="cc-gear-toggle" aria-label="Display settings" aria-expanded="false" aria-controls="cc-gear-panel">⚙</button>
+<div class="cc-gear-panel" id="cc-gear-panel" hidden role="dialog" aria-label="Display settings">
+  <fieldset class="cc-fieldset">
+    <legend>Theme</legend>
+    <div class="cc-opts"><label class="cc-opt" for="cc-theme-auto"><input id="cc-theme-auto" type="radio" name="cc-theme" value="auto" checked><span>Auto</span></label><label class="cc-opt" for="cc-theme-light"><input id="cc-theme-light" type="radio" name="cc-theme" value="light"><span>Light</span></label><label class="cc-opt" for="cc-theme-dark"><input id="cc-theme-dark" type="radio" name="cc-theme" value="dark"><span>Dark</span></label><label class="cc-opt" for="cc-theme-sepia"><input id="cc-theme-sepia" type="radio" name="cc-theme" value="sepia"><span>Sepia</span></label></div>
+  </fieldset>
+  <fieldset class="cc-fieldset">
+    <legend>Text size</legend>
+    <div class="cc-opts"><label class="cc-opt" for="cc-size-s"><input id="cc-size-s" type="radio" name="cc-size" value="s"><span>S</span></label><label class="cc-opt" for="cc-size-m"><input id="cc-size-m" type="radio" name="cc-size" value="m" checked><span>M</span></label><label class="cc-opt" for="cc-size-l"><input id="cc-size-l" type="radio" name="cc-size" value="l"><span>L</span></label><label class="cc-opt" for="cc-size-xl"><input id="cc-size-xl" type="radio" name="cc-size" value="xl"><span>XL</span></label></div>
+  </fieldset>
+  <fieldset class="cc-fieldset">
+    <legend>Width</legend>
+    <div class="cc-opts"><label class="cc-opt" for="cc-width-narrow"><input id="cc-width-narrow" type="radio" name="cc-width" value="narrow"><span>Narrow</span></label><label class="cc-opt" for="cc-width-comfortable"><input id="cc-width-comfortable" type="radio" name="cc-width" value="comfortable" checked><span>Comfortable</span></label><label class="cc-opt" for="cc-width-wide"><input id="cc-width-wide" type="radio" name="cc-width" value="wide"><span>Wide</span></label></div>
+  </fieldset>
+  <fieldset class="cc-fieldset">
+    <legend>Font</legend>
+    <div class="cc-opts"><label class="cc-opt" for="cc-family-sans"><input id="cc-family-sans" type="radio" name="cc-family" value="sans" checked><span>Sans</span></label><label class="cc-opt" for="cc-family-serif"><input id="cc-family-serif" type="radio" name="cc-family" value="serif"><span>Serif</span></label></div>
+  </fieldset>
+  <fieldset class="cc-fieldset">
+    <legend>Sections</legend>
+    <label class="cc-opt"><input type="checkbox" name="cc-show-tldr" checked><span>TL;DR</span></label>
+    <label class="cc-opt"><input type="checkbox" name="cc-show-map" checked><span>Map</span></label>
+    <label class="cc-opt"><input type="checkbox" name="cc-show-stepper" checked><span>Stepper</span></label>
+  </fieldset>
+</div>
+<nav class="cc-stepper" aria-label="Reading order">
+  <button type="button" class="cc-step-btn cc-step-prev" aria-label="Previous section">‹</button>
+  <span class="cc-step-status">
+    <span class="cc-step-pos">1 / 5</span>
+    <span class="cc-step-title">Overview</span>
+  </span>
+  <button type="button" class="cc-step-btn cc-step-next" aria-label="Next section">›</button>
+</nav>
+<script>(function () {
+  'use strict';
+
+  function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
+  function $(sel, root) { return (root || document).querySelector(sel); }
+
+  function inMapInteractive(el) {
+    if (!el) return false;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return true;
+    if (el.isContentEditable) return true;
+    return el.closest('[role="slider"],[role="radio"],[role="combobox"],[role="textbox"],[role="spinbutton"]') != null;
+  }
+
+  function cssEscape(value) {
+    if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(value);
+    return String(value).replace(/[^a-zA-Z0-9_-]/g, function (c) { return '\\' + c; });
+  }
+
+  function clearChildren(el) {
+    while (el.firstChild) el.removeChild(el.firstChild);
+  }
+
+  function buildAdjacency(svg) {
+    var outgoing = {};
+    var incoming = {};
+    $$('.edge', svg).forEach(function (edge) {
+      var from = edge.getAttribute('data-from');
+      var to = edge.getAttribute('data-to');
+      if (!from || !to) return;
+      (outgoing[from] = outgoing[from] || []).push({ edge: edge, to: to });
+      (incoming[to] = incoming[to] || []).push({ edge: edge, from: from });
+    });
+    return { outgoing: outgoing, incoming: incoming };
+  }
+
+  function clearFocus(svg) {
+    svg.classList.remove('has-focus');
+    $$('.node.is-active', svg).forEach(function (n) { n.classList.remove('is-active'); });
+    $$('.edge.is-active', svg).forEach(function (e) { e.classList.remove('is-active'); });
+  }
+
+  function focusNode(svg, nodeId, adj) {
+    clearFocus(svg);
+    svg.classList.add('has-focus');
+    var node = svg.querySelector('.node[data-node-id="' + cssEscape(nodeId) + '"]');
+    if (node) node.classList.add('is-active');
+    (adj.outgoing[nodeId] || []).forEach(function (rel) {
+      rel.edge.classList.add('is-active');
+      var dn = svg.querySelector('.node[data-node-id="' + cssEscape(rel.to) + '"]');
+      if (dn) dn.classList.add('is-active');
+    });
+    (adj.incoming[nodeId] || []).forEach(function (rel) {
+      rel.edge.classList.add('is-active');
+      var sn = svg.querySelector('.node[data-node-id="' + cssEscape(rel.from) + '"]');
+      if (sn) sn.classList.add('is-active');
+    });
+  }
+
+  function collectSectionContent(anchor) {
+    var heading = /^H[1-6]$/.test(anchor.tagName) ? anchor : anchor.nextElementSibling;
+    while (heading && !/^H[1-6]$/.test(heading.tagName)) heading = heading.nextElementSibling;
+    if (!heading) return null;
+    var frag = document.createDocumentFragment();
+    frag.appendChild(heading.cloneNode(true));
+    var cur = heading.nextElementSibling;
+    var taken = 0;
+    while (cur && !/^H[1-6]$/.test(cur.tagName) && taken < 6) {
+      if (cur.tagName === 'A' && !cur.textContent.trim()) {
+        cur = cur.nextElementSibling;
+        continue;
+      }
+      frag.appendChild(cur.cloneNode(true));
+      taken++;
+      cur = cur.nextElementSibling;
+    }
+    return frag;
+  }
+
+  var _detailActivator = null;
+
+  function openDetailPanel(slug, activator) {
+    var panel = document.getElementById('cc-detail-panel');
+    if (!panel) return;
+    var anchor = document.getElementById(slug);
+    if (!anchor) return;
+    var content = collectSectionContent(anchor);
+    var body = $('.cc-detail-body', panel);
+    if (!body) return;
+    clearChildren(body);
+    if (content) body.appendChild(content);
+    _detailActivator = activator || null;
+    panel.hidden = false;
+    anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    var target = anchor.nextElementSibling;
+    if (target) {
+      target.classList.add('cc-section-flash');
+      setTimeout(function () { target.classList.remove('cc-section-flash'); }, 1400);
+    }
+    var closeBtn = panel.querySelector('.cc-detail-close');
+    if (closeBtn) {
+      closeBtn.focus();
+    } else {
+      if (!panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
+      panel.focus();
+    }
+  }
+
+  function closeDetailPanel() {
+    var panel = document.getElementById('cc-detail-panel');
+    if (panel) panel.hidden = true;
+    var activator = _detailActivator;
+    _detailActivator = null;
+    if (activator && activator.isConnected) activator.focus();
+  }
+
+  function wireSvgInteractions(svg) {
+    var adj = buildAdjacency(svg);
+    var locked = null;
+
+    $$('.node', svg).forEach(function (node) {
+      var id = node.getAttribute('data-node-id');
+      var target = node.getAttribute('data-target-section');
+
+      node.addEventListener('mouseenter', function () {
+        if (locked) return;
+        focusNode(svg, id, adj);
+      });
+      node.addEventListener('mouseleave', function () {
+        if (locked) return;
+        clearFocus(svg);
+      });
+      node.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (target) {
+          locked = id;
+          focusNode(svg, id, adj);
+          openDetailPanel(target, node);
+          return;
+        }
+        if (locked === id) {
+          locked = null;
+          clearFocus(svg);
+        } else {
+          locked = id;
+          focusNode(svg, id, adj);
+        }
+      });
+      node.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        }
+      });
+    });
+
+    svg.addEventListener('click', function () {
+      if (locked) {
+        locked = null;
+        clearFocus(svg);
+      }
+    });
+  }
+
+  function wireZoomPan(canvas) {
+    var svg = $('svg', canvas);
+    if (!svg) return;
+    svg.removeAttribute('preserveAspectRatio');
+    var state = { scale: 1, tx: 0, ty: 0 };
+    var dragging = false;
+    var startX = 0;
+    var startY = 0;
+    var startTx = 0;
+    var startTy = 0;
+
+    function apply() {
+      var g = svg.querySelector('.nodes');
+      var e = svg.querySelector('.edges');
+      var transform = 'translate(' + state.tx + ' ' + state.ty + ') scale(' + state.scale + ')';
+      if (g) g.setAttribute('transform', transform);
+      if (e) e.setAttribute('transform', transform);
+    }
+
+    canvas.addEventListener('wheel', function (ev) {
+      if (!ev.ctrlKey && Math.abs(ev.deltaY) < 4 && Math.abs(ev.deltaX) < 4) return;
+      ev.preventDefault();
+      var factor = ev.deltaY < 0 ? 1.12 : 0.89;
+      state.scale = Math.max(0.4, Math.min(4, state.scale * factor));
+      apply();
+    }, { passive: false });
+
+    canvas.addEventListener('pointerdown', function (ev) {
+      if (ev.target.closest('.node')) return;
+      dragging = true;
+      startX = ev.clientX;
+      startY = ev.clientY;
+      startTx = state.tx;
+      startTy = state.ty;
+      canvas.setPointerCapture(ev.pointerId);
+      canvas.classList.add('is-dragging');
+    });
+
+    canvas.addEventListener('pointermove', function (ev) {
+      if (!dragging) return;
+      state.tx = startTx + (ev.clientX - startX);
+      state.ty = startTy + (ev.clientY - startY);
+      apply();
+    });
+
+    function endDrag(ev) {
+      dragging = false;
+      try { canvas.releasePointerCapture(ev.pointerId); } catch (_) {}
+      canvas.classList.remove('is-dragging');
+    }
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+
+    var controls = canvas.parentElement && canvas.parentElement.querySelector('.cc-map-controls');
+    if (controls) {
+      controls.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('.cc-map-btn');
+        if (!btn) return;
+        var action = btn.getAttribute('data-action');
+        if (action === 'zoom-in') state.scale = Math.min(4, state.scale * 1.2);
+        else if (action === 'zoom-out') state.scale = Math.max(0.4, state.scale / 1.2);
+        else if (action === 'zoom-reset') { state.scale = 1; state.tx = 0; state.ty = 0; }
+        apply();
+      });
+    }
+
+    document.addEventListener('keydown', function (ev) {
+      if (inMapInteractive(ev.target)) return;
+      if (ev.key === '+' || ev.key === '=') { state.scale = Math.min(4, state.scale * 1.15); apply(); }
+      else if (ev.key === '-') { state.scale = Math.max(0.4, state.scale / 1.15); apply(); }
+      else if (ev.key === '0') { state.scale = 1; state.tx = 0; state.ty = 0; apply(); }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    $$('.diagram-svg').forEach(wireSvgInteractions);
+    $$('.cc-map-canvas[data-zoomable]').forEach(wireZoomPan);
+    var panel = document.getElementById('cc-detail-panel');
+    if (panel) {
+      var close = panel.querySelector('.cc-detail-close');
+      if (close) close.addEventListener('click', closeDetailPanel);
+    }
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') closeDetailPanel();
+    });
+  });
+})();
+</script>
+<script>(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'cc-to-html-ui';
+  var SECTION_TOGGLE_KEYS = ['tldr', 'map', 'stepper'];
+  var UI_KEYS = ['theme', 'size', 'width', 'family'];
+
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
+
+  function readStorage() {
+    try {
+      var raw = sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (_) { return null; }
+  }
+
+  function writeStorage(state) {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (_) {}
+  }
+
+  function readSections() {
+    var node = document.getElementById('cc-sections');
+    if (!node) return [];
+    try { return JSON.parse(node.textContent || '[]'); } catch (_) { return []; }
+  }
+
+  function applyUi(ui) {
+    var root = document.documentElement;
+    UI_KEYS.forEach(function (k) {
+      if (typeof ui[k] === 'string' && ui[k]) root.setAttribute('data-' + k, ui[k]);
+    });
+    SECTION_TOGGLE_KEYS.forEach(function (k) {
+      var key = 'show' + k.charAt(0).toUpperCase() + k.slice(1);
+      var cls = 'cc-hide-' + k;
+      if (ui[key] === false) document.body.classList.add(cls);
+      else document.body.classList.remove(cls);
+    });
+  }
+
+  function currentUiFromDom() {
+    var root = document.documentElement;
+    var out = {};
+    UI_KEYS.forEach(function (k) { out[k] = root.getAttribute('data-' + k) || null; });
+    return out;
+  }
+
+  function inInteractive(el) {
+    if (!el) return false;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return true;
+    if (el.isContentEditable) return true;
+    return el.closest('[role="slider"],[role="radio"],[role="combobox"],[role="textbox"],[role="spinbutton"]') != null;
+  }
+
+  function getFocusable(container) {
+    return Array.from(container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+      .filter(function (el) { return !el.disabled && el.offsetParent !== null; });
+  }
+
+  function wireGear(state) {
+    var toggle = $('.cc-gear-toggle');
+    var panel = $('.cc-gear-panel');
+    if (!toggle || !panel) return;
+
+    function openPanel() {
+      panel.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      var focusable = getFocusable(panel);
+      if (focusable.length > 0) focusable[0].focus();
+    }
+
+    function closePanel() {
+      panel.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.focus();
+    }
+
+    toggle.addEventListener('click', function () {
+      if (panel.hidden === false) closePanel();
+      else openPanel();
+    });
+
+    document.addEventListener('click', function (ev) {
+      if (panel.hidden) return;
+      if (ev.target.closest('.cc-gear-panel') || ev.target.closest('.cc-gear-toggle')) return;
+      closePanel();
+    });
+
+    document.addEventListener('keydown', function (ev) {
+      if (panel.hidden) return;
+      if (ev.key === 'Escape') {
+        ev.stopPropagation();
+        closePanel();
+        return;
+      }
+      if (ev.key === 'Tab') {
+        var focusable = getFocusable(panel);
+        if (focusable.length === 0) { ev.preventDefault(); return; }
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (ev.shiftKey) {
+          if (document.activeElement === first) { ev.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { ev.preventDefault(); first.focus(); }
+        }
+      }
+    });
+
+    UI_KEYS.forEach(function (k) {
+      $$('input[name="cc-' + k + '"]', panel).forEach(function (input) {
+        input.addEventListener('change', function () {
+          if (!input.checked) return;
+          state[k] = input.value;
+          applyUi(state);
+          writeStorage(state);
+        });
+      });
+    });
+
+    SECTION_TOGGLE_KEYS.forEach(function (k) {
+      var input = $('input[name="cc-show-' + k + '"]', panel);
+      if (!input) return;
+      var key = 'show' + k.charAt(0).toUpperCase() + k.slice(1);
+      if (state[key] === false) input.checked = false;
+      input.addEventListener('change', function () {
+        state[key] = input.checked;
+        applyUi(state);
+        writeStorage(state);
+      });
+    });
+  }
+
+  function wireSearch(sections) {
+    var input = $('.cc-search-input');
+    if (!input) return;
+
+    document.addEventListener('keydown', function (ev) {
+      if (inInteractive(ev.target)) return;
+      if (ev.key === '/') {
+        if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+        ev.preventDefault();
+        input.focus();
+        input.select();
+      }
+    });
+
+    function filter(q) {
+      var query = String(q || '').trim().toLowerCase();
+      sections.forEach(function (s) {
+        var anchor = document.getElementById(s.slug);
+        if (!anchor) return;
+        var heading = anchor.nextElementSibling;
+        if (!heading) return;
+        var match = !query || s.text.toLowerCase().indexOf(query) !== -1;
+        if (match) {
+          heading.classList.remove('cc-section-dim');
+          if (query) heading.classList.add('cc-section-hit');
+          else heading.classList.remove('cc-section-hit');
+        } else {
+          heading.classList.add('cc-section-dim');
+          heading.classList.remove('cc-section-hit');
+        }
+      });
+      $$('.diagram-svg .node').forEach(function (node) {
+        var label = (node.getAttribute('aria-label') || '').toLowerCase();
+        if (!query || label.indexOf(query) !== -1) node.classList.remove('cc-section-dim');
+        else node.classList.add('cc-section-dim');
+      });
+    }
+
+    input.addEventListener('input', function () { filter(input.value); });
+    input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') { input.value = ''; filter(''); input.blur(); }
+    });
+  }
+
+  function wireStepper(sections) {
+    var nav = $('.cc-stepper');
+    if (!nav || sections.length < 2) return;
+    var prev = $('.cc-step-prev', nav);
+    var next = $('.cc-step-next', nav);
+    var pos = $('.cc-step-pos', nav);
+    var title = $('.cc-step-title', nav);
+    var idx = 0;
+
+    function update() {
+      pos.textContent = (idx + 1) + ' / ' + sections.length;
+      title.textContent = sections[idx].text;
+      prev.disabled = idx === 0;
+      next.disabled = idx === sections.length - 1;
+      $$('.cc-toc-item a').forEach(function (a) {
+        var s = a.getAttribute('data-section');
+        if (s === sections[idx].slug) a.classList.add('cc-step-current');
+        else a.classList.remove('cc-step-current');
+      });
+      $$('.diagram-svg .node').forEach(function (n) {
+        var target = n.getAttribute('data-target-section');
+        if (target === sections[idx].slug) n.classList.add('is-active');
+        else n.classList.remove('is-active');
+      });
+    }
+
+    function go(delta) {
+      var nextIdx = Math.max(0, Math.min(sections.length - 1, idx + delta));
+      if (nextIdx === idx) return;
+      idx = nextIdx;
+      var anchor = document.getElementById(sections[idx].slug);
+      if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      update();
+    }
+
+    prev.addEventListener('click', function () { go(-1); });
+    next.addEventListener('click', function () { go(1); });
+
+    document.addEventListener('keydown', function (ev) {
+      if (inInteractive(ev.target)) return;
+      if (ev.key === 'j' || ev.key === 'ArrowRight') { ev.preventDefault(); go(1); }
+      else if (ev.key === 'k' || ev.key === 'ArrowLeft') { ev.preventDefault(); go(-1); }
+    });
+
+    update();
+  }
+
+  function init() {
+    var stored = readStorage() || {};
+    var dom = currentUiFromDom();
+    var state = {
+      theme: stored.theme || dom.theme || 'auto',
+      size: stored.size || dom.size || 'm',
+      width: stored.width || dom.width || 'comfortable',
+      family: stored.family || dom.family || 'sans',
+      showTldr: stored.showTldr !== false,
+      showMap: stored.showMap !== false,
+      showStepper: stored.showStepper !== false
+    };
+    applyUi(state);
+
+    UI_KEYS.forEach(function (k) {
+      var input = $('input[name="cc-' + k + '"][value="' + state[k] + '"]');
+      if (input) input.checked = true;
+    });
+
+    wireGear(state);
+    var sections = readSections();
+    wireSearch(sections);
+    wireStepper(sections);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+</body>
+</html>
