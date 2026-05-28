@@ -1,12 +1,18 @@
 {
-  "name": "to-html",
-  "version": "2.0.3",
+  "name": "to-html-monorepo",
+  "version": "2.1.0",
   "private": true,
-  "description": "Claude Code plugin — content-aware HTML rendering. Internal package; no runtime dependencies, marked is vendored.",
-  "engines": {
-    "node": ">=18"
-  },
+  "engines": { "node": ">=18" },
+  "workspaces": [
+    "core",
+    "cli",
+    "shared/transcript",
+    "adapters/*"
+  ],
   "scripts": {
-    "test": "node --test 'test/**/*.test.js'"
+    "test": "npm test --workspaces --if-present",
+    "lint": "eslint .",
+    "sync": "node scripts/sync-core.js && node scripts/sync-version.js",
+    "prepare": "husky || true"
   }
 }
