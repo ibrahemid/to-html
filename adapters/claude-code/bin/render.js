@@ -3,18 +3,12 @@
 
 const path = require('path');
 const { sessionArtifactsDir, safeSessionSegment } = require('../lib/paths');
-const { classify, shouldRender } = require('../core/lib/classifier');
-const { composeArtifact } = require('../core/lib/compose');
 const { openInBrowser, clickableUrl } = require('../lib/open');
 const { readJsonStdin, writeFileAtomic } = require('../lib/io');
-
-const MAX_MARKDOWN_BYTES = 2 * 1024 * 1024;
+const { renderMarkdown } = require('../core/lib/index');
 
 class RenderError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'RenderError';
-  }
+  constructor(message) { super(message); this.name = 'RenderError'; }
 }
 
 function slugify(input, fallback) {
@@ -32,58 +26,31 @@ function clampTurnIndex(raw) {
   return Math.max(0, Math.floor(n));
 }
 
-function cappedMarkdown(raw) {
-  const value = typeof raw === 'string' ? raw : '';
-  if (Buffer.byteLength(value, 'utf8') <= MAX_MARKDOWN_BYTES) return value;
-  return value.slice(0, MAX_MARKDOWN_BYTES) + '\n\n*(content truncated — exceeded markdown size cap)*';
-}
-
 async function render(input) {
   if (!input || typeof input !== 'object') {
     throw new RenderError('render() requires an input object');
   }
-
-  const markdown = cappedMarkdown(input.markdown);
   const sessionId = safeSessionSegment(input.sessionId);
   const turnIndex = clampTurnIndex(input.turnIndex);
   const project = typeof input.project === 'string' ? input.project : '';
   const autoOpen = input.autoOpen === true;
   const trigger = input.trigger === 'manual' ? 'manual' : 'auto';
-  const renderThreshold = (input.renderThreshold && typeof input.renderThreshold === 'object')
-    ? input.renderThreshold
-    : null;
-  const uiDefaults = (input.uiDefaults && typeof input.uiDefaults === 'object') ? input.uiDefaults : null;
 
-  if (!markdown || !markdown.trim()) {
-    return { ok: true, skipped: true, reason: 'empty-markdown' };
-  }
-
-  const classification = classify(markdown);
-
-  if (classification.template === 'skip') {
-    return { ok: true, skipped: true, reason: classification.reason };
-  }
-
-  const sourceMarkdown = classification.source || markdown;
-
-  if (trigger !== 'manual') {
-    const gate = shouldRender(classification.signals, sourceMarkdown, renderThreshold);
-    if (!gate.render) {
-      return { ok: true, skipped: true, reason: gate.reason, template: classification.template };
-    }
-  }
-
-  const artifact = composeArtifact({
-    markdown,
-    classification,
+  const result = renderMarkdown(input.markdown, {
+    trigger,
     meta: { turnIndex, sessionId, project },
-    uiDefaults
+    uiDefaults: input.uiDefaults || null,
+    renderThreshold: input.renderThreshold || null
   });
 
+  if (result.skipped) {
+    return { ok: true, skipped: true, reason: result.reason, template: result.template };
+  }
+
   const dir = sessionArtifactsDir(sessionId);
-  const filename = `${String(turnIndex).padStart(4, '0')}-${classification.template}-${slugify(artifact.title, 'turn')}.html`;
+  const filename = `${String(turnIndex).padStart(4, '0')}-${result.template}-${slugify(result.title, 'turn')}.html`;
   const fullPath = path.join(dir, filename);
-  writeFileAtomic(fullPath, artifact.html);
+  writeFileAtomic(fullPath, result.html);
 
   let openError = null;
   if (autoOpen) {
@@ -93,9 +60,9 @@ async function render(input) {
   return {
     ok: true,
     skipped: false,
-    template: classification.template,
-    reason: classification.reason,
-    title: artifact.title,
+    template: result.template,
+    reason: result.reason,
+    title: result.title,
     path: fullPath,
     url: clickableUrl(fullPath),
     opened: !!autoOpen && !openError,
@@ -119,8 +86,6 @@ async function main() {
   }
 }
 
-if (require.main === module) {
-  main();
-}
+if (require.main === module) main();
 
-module.exports = { render, MAX_MARKDOWN_BYTES };
+module.exports = { render };
