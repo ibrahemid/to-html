@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.0
+
+### Changed
+- Extracted the renderer into a shared core in `ibrahemid/to-html`; the plugin is installed via git-subdir from that repo. No end-user behavior change: output is byte-identical for the same input.
+
 ## v2.0.3
 
 ### Fixed
