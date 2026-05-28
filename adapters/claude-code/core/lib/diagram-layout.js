@@ -1,7 +1,7 @@
 'use strict';
 
 const NODE_PADDING_X = 18;
-const NODE_PADDING_Y = 14;
+const _NODE_PADDING_Y = 14;
 const NODE_MIN_WIDTH = 110;
 const NODE_HEIGHT = 56;
 const GAP_X = 80;

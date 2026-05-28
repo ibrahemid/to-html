@@ -2,7 +2,9 @@
   "name": "to-html-monorepo",
   "version": "2.1.0",
   "private": true,
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "workspaces": [
     "core",
     "cli",
@@ -14,5 +16,8 @@
     "lint": "eslint .",
     "sync": "node scripts/sync-core.js && node scripts/sync-version.js",
     "prepare": "husky || true"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.4"
   }
 }

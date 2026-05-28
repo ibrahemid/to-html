@@ -9,7 +9,7 @@ const { readJsonStdin } = require('../lib/io');
 const { appendEvent } = require('../lib/diag');
 const { classify } = require('../core/lib/classifier');
 const transcriptAdapter = require('../shared/transcript').getAdapter('claude-code');
-const { extractTextFromContent, stripControlLines, collectAssistantTexts, hashText, isStale: isStaleShared } = transcriptAdapter;
+const { stripControlLines, collectAssistantTexts, hashText, isStale: isStaleShared } = transcriptAdapter;
 
 const RETRY_DELAY_MS = 500;
 const RETRY_MIN_CHARS = 400;

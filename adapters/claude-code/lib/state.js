@@ -156,7 +156,7 @@ function readState(explicitCwd) {
     const parsed = JSON.parse(raw);
     const migrated = migrate(parsed) || {};
     return normalize({ ...DEFAULT_STATE, ...migrated, cwd, __key: key, __file: file });
-  } catch (err) {
+  } catch (_err) {
     quarantineBadFile(file, raw);
     return normalize({ ...DEFAULT_STATE, cwd, __key: key, __file: file });
   }

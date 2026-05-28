@@ -40,7 +40,7 @@ function buildSectionIndex(markdown) {
     sections.push({ slug, text, level, lineIndex: i });
   }
 
-  const clean = sections.map(({ lineIndex, ...rest }) => rest);
+  const clean = sections.map(({ lineIndex: _lineIndex, ...rest }) => rest);
   return { sections: clean, annotatedMarkdown: markdown };
 }
 

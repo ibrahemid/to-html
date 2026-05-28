@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const { readState, writeState, DEFAULT_UI, VALID_UI_VALUES } = require('../lib/state');
+const { readState, writeState, VALID_UI_VALUES } = require('../lib/state');
 const { homeShortcut, resolveCacheRoot } = require('../lib/paths');
 
 const KNOWN_TOGGLE_ARGS = new Set(['on', 'off', 'status', 'reset', 'toggle']);

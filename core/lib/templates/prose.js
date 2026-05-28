@@ -18,7 +18,7 @@ function deriveTitle(markdown, override) {
   return 'Note';
 }
 
-function render({ markdown, meta, override, signals, buildShell, readAsset, tldrHtml, mapHtml, chromeHtml, uiDefaults }) {
+function render({ markdown, meta, override, _signals, buildShell, readAsset, tldrHtml, mapHtml, chromeHtml, uiDefaults }) {
   const title = deriveTitle(markdown, override);
 
   const stripped = markdown.replace(/^#\s+.*$/m, '').trim();

@@ -32,7 +32,7 @@ function mirrorDir(src, dest) {
       const p = path.join(d, e.name);
       if (e.isDirectory()) {
         prune(p);
-        try { fs.rmdirSync(p); } catch (_) { }
+        try { fs.rmdirSync(p); } catch (_) { } // intentional ignore
       } else if (e.isFile()) {
         const rel = path.relative(dest, p);
         if (!wantedEntries.has(rel)) fs.unlinkSync(p);

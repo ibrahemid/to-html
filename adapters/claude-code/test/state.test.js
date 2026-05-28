@@ -16,7 +16,7 @@ const TEST_CWD = '/tmp/cc-to-html-state-tests';
 function clearState() {
   const dir = sessionsDir();
   for (const f of fs.readdirSync(dir)) {
-    try { fs.unlinkSync(path.join(dir, f)); } catch (_) {}
+    try { fs.unlinkSync(path.join(dir, f)); } catch (_) { } // intentional ignore
   }
 }
 
