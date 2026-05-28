@@ -109,7 +109,8 @@ function dispatchRender(input) {
     tldrHtml = '',
     mapHtml = '',
     chromeHtml = '',
-    uiDefaults = null
+    uiDefaults = null,
+    nowIso = null
   } = input;
   const args = {
     markdown,
@@ -121,7 +122,8 @@ function dispatchRender(input) {
     tldrHtml,
     mapHtml,
     chromeHtml,
-    uiDefaults
+    uiDefaults,
+    nowIso
   };
   try {
     const mod = templateModule(template);

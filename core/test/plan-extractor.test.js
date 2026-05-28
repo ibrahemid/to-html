@@ -109,3 +109,19 @@ test('mergeTaskStatuses: prior non-pending status wins', () => {
 test('MIN_TASK_TEXT_LEN exported', () => {
   assert.ok(MIN_TASK_TEXT_LEN >= 3);
 });
+
+test('parsePlanMarkdown: nowIso option overrides createdAt for deterministic output', () => {
+  const { parsePlanMarkdown } = require('../lib/plan-extractor');
+  const md = '# Plan\n## Phase\n- [ ] task one';
+  const fixed = '2026-05-28T00:00:00.000Z';
+  const plan = parsePlanMarkdown(md, { nowIso: fixed });
+  assert.strictEqual(plan.createdAt, fixed);
+});
+
+test('parsePlanMarkdown: default createdAt is current wall clock when nowIso omitted', () => {
+  const { parsePlanMarkdown } = require('../lib/plan-extractor');
+  const before = new Date().toISOString();
+  const plan = parsePlanMarkdown('# P\n## X\n- [ ] t');
+  const after = new Date().toISOString();
+  assert.ok(plan.createdAt >= before && plan.createdAt <= after);
+});

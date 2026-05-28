@@ -165,7 +165,7 @@ function parsePlanMarkdown(markdown, options = {}) {
     title: finalTitle,
     slug: slugify(finalTitle),
     phases,
-    createdAt: new Date().toISOString(),
+    createdAt: typeof options.nowIso === 'string' ? options.nowIso : new Date().toISOString(),
     source: options.source || 'unknown'
   };
 }

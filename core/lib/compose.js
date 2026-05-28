@@ -37,7 +37,7 @@ function stripLines(markdown, startLine, endLine) {
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-function composeArtifact({ markdown, classification = null, meta = {}, uiDefaults = null }) {
+function composeArtifact({ markdown, classification = null, meta = {}, uiDefaults = null, nowIso = null }) {
   const cls = classification || classify(markdown);
   if (cls.template === 'skip') {
     return { skipped: true, reason: cls.reason, template: 'skip' };
@@ -67,7 +67,8 @@ function composeArtifact({ markdown, classification = null, meta = {}, uiDefault
     tldrHtml,
     mapHtml,
     chromeHtml,
-    uiDefaults
+    uiDefaults,
+    nowIso
   });
 
   const html = injectHeadingIds(rendered.html, sections);

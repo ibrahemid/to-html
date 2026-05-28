@@ -138,10 +138,11 @@ function renderFromPlan({ plan, meta, override, buildShell, readAsset, tldrHtml,
   };
 }
 
-function render({ markdown, meta, override, buildShell, readAsset, tldrHtml, mapHtml, chromeHtml, uiDefaults }) {
+function render({ markdown, meta, override, buildShell, readAsset, tldrHtml, mapHtml, chromeHtml, uiDefaults, nowIso = null }) {
   const plan = parsePlanMarkdown(markdown, {
     titleOverride: override && override.title,
-    source: 'classifier'
+    source: 'classifier',
+    nowIso
   });
   return renderFromPlan({ plan, meta, override, buildShell, readAsset, tldrHtml, mapHtml, chromeHtml, uiDefaults });
 }
