@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+node scripts/sync-core.js
+node scripts/sync-version.js
+git add adapters/claude-code/core adapters/claude-code/shared \
+        adapters/claude-code/package.json \
+        adapters/claude-code/.claude-plugin/plugin.json \
+        core/package.json cli/package.json shared/transcript/package.json 2>/dev/null || true

@@ -15,9 +15,10 @@
     "test": "npm test --workspaces --if-present",
     "lint": "eslint .",
     "sync": "node scripts/sync-core.js && node scripts/sync-version.js",
-    "prepare": "husky || true"
+    "prepare": "husky"
   },
   "devDependencies": {
-    "eslint": "^9.39.4"
+    "eslint": "^9.39.4",
+    "husky": "^9.1.7"
   }
 }
