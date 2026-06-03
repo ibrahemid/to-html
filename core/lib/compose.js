@@ -37,7 +37,15 @@ function stripLines(markdown, startLine, endLine) {
   return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-function composeArtifact({ markdown, classification = null, meta = {}, uiDefaults = null, nowIso = null }) {
+// owns-layout bodies carry one <main> + an inert <aside class="decision-bar">; the timeline fragment demotes main to div and strips the bar. N <main>s in one doc is invalid HTML; per-turn form ids collide. Archive html is untouched.
+function toFragmentBody(bodyHtml) {
+  return String(bodyHtml)
+    .replace('<main class="cc-main">', '<div class="cc-main">')
+    .replace('</main>', '</div>')
+    .replace(/<aside class="decision-bar"[\s\S]*?<\/aside>/g, '');
+}
+
+function composeArtifact({ markdown, classification = null, meta = {}, uiDefaults = null, nowIso = null, enrichment = null }) {
   const cls = classification || classify(markdown);
   if (cls.template === 'skip') {
     return { skipped: true, reason: cls.reason, template: 'skip' };
@@ -48,9 +56,12 @@ function composeArtifact({ markdown, classification = null, meta = {}, uiDefault
 
   const { tldr, body: bodyAfterTldr } = extractSummary(sourceMarkdown);
   const { sections, annotatedMarkdown } = buildSectionIndex(bodyAfterTldr);
-  const tldrHtml = renderTldrBand(tldr);
+  const enrichTldr = (enrichment && typeof enrichment.tldr === 'string' && enrichment.tldr.trim()) ? enrichment.tldr.trim() : null;
+  const effectiveTldr = enrichTldr || tldr;
+  const tldrHtml = renderTldrBand(effectiveTldr);
 
-  const resolvedGraph = ownsLayout ? null : resolveGraph(annotatedMarkdown, sections);
+  const preferMermaid = (enrichment && typeof enrichment.graph === 'string') ? enrichment.graph : '';
+  const resolvedGraph = ownsLayout ? null : resolveGraph(annotatedMarkdown, sections, { preferMermaid });
   const mapHtml = ownsLayout ? '' : renderMapSection({ graph: resolvedGraph, sections });
   const chromeHtml = renderChrome({ uiDefaults, sections, template: cls.template });
   let bodyMarkdown = ownsLayout ? bodyAfterTldr : annotatedMarkdown;
@@ -73,12 +84,18 @@ function composeArtifact({ markdown, classification = null, meta = {}, uiDefault
 
   const html = injectHeadingIds(rendered.html, sections);
 
+  const bodyContent = ownsLayout
+    ? toFragmentBody(rendered.body)
+    : `<div class="cc-main">\n${rendered.body}\n</div>`;
+  const fragment = `${tldrHtml}\n${mapHtml}\n${bodyContent}`;
+
   return {
     skipped: false,
     template: cls.template,
     reason: cls.reason,
     title: rendered.title,
     html,
+    fragment,
     hasTldr: tldrHtml.length > 0,
     hasGraph: !!resolvedGraph,
     sectionCount: sections.length

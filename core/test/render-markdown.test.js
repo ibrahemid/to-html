@@ -65,3 +65,11 @@ test('renderMarkdown: returns full record shape', () => {
     assert.ok(k in r, `missing key: ${k}`);
   }
 });
+
+test('renderMarkdown: passes enrichment through and exposes fragment', () => {
+  const md = '# Title\n\n' + 'Body sentence. '.repeat(40);
+  const r = renderMarkdown(md, { trigger: 'manual', enrichment: { tldr: 'E.', graph: 'graph TD\n A-->B' } });
+  assert.equal(r.skipped, false);
+  assert.ok(r.hasTldr && r.hasGraph);
+  assert.ok(typeof r.fragment === 'string' && r.fragment.includes('E.'));
+});

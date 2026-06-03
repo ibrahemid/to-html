@@ -35,6 +35,7 @@ function render({ markdown, meta, override, _signals, buildShell, readAsset, tld
 
   return {
     title,
+    body,
     html: buildShell({
       classname: 'tpl-prose',
       title,

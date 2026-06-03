@@ -47,3 +47,49 @@ test('composeArtifact: heading with inline formatting still gets the right id', 
   const { html } = composeArtifact({ markdown: md, meta: { turnIndex: 1, sessionId: 't', project: 'p' } });
   assert.ok(/id="s-1-bold-title"/.test(html));
 });
+
+test('composeArtifact: enrichment.tldr fills the TL;DR band when reply has none', () => {
+  const md = '# Title\n\n' + 'Body sentence. '.repeat(40);
+  const art = composeArtifact({ markdown: md, enrichment: { tldr: 'Enriched summary.', graph: '' } });
+  assert.ok(art.hasTldr, 'tldr band present from enrichment');
+  assert.ok(art.html.includes('Enriched summary.'));
+  assert.ok(art.fragment.includes('Enriched summary.'));
+});
+
+test('composeArtifact: enrichment.graph renders a map without a fenced block in the body', () => {
+  const md = '# Title\n\n' + 'Body sentence. '.repeat(40);
+  const art = composeArtifact({ markdown: md, enrichment: { tldr: 'S.', graph: 'graph TD\n A[One]-->B[Two]' } });
+  assert.ok(art.hasGraph, 'graph rendered from enrichment');
+});
+
+test('composeArtifact: invalid enrichment.graph drops the map, keeps tldr', () => {
+  const md = '# Title\n\n' + 'Body sentence. '.repeat(40);
+  const art = composeArtifact({ markdown: md, enrichment: { tldr: 'S.', graph: 'garbage not mermaid' } });
+  assert.equal(art.hasGraph, false);
+  assert.ok(art.hasTldr);
+});
+
+test('composeArtifact: enrichment tldr is HTML-escaped (XSS)', () => {
+  const md = '# Title\n\n' + 'Body sentence. '.repeat(40);
+  const art = composeArtifact({ markdown: md, enrichment: { tldr: '<script>alert(1)</script>', graph: '' } });
+  assert.ok(!art.html.includes('<script>alert(1)</script>'));
+  assert.ok(!art.fragment.includes('<script>alert(1)</script>'));
+});
+
+test('composeArtifact: fragment contains body but no doctype/head/main chrome', () => {
+  const md = '# Title\n\n' + 'Body sentence. '.repeat(40);
+  const art = composeArtifact({ markdown: md });
+  assert.ok(typeof art.fragment === 'string' && art.fragment.length > 0);
+  assert.ok(!/<!doctype html>/i.test(art.fragment));
+  assert.ok(!art.fragment.includes('<head>'));
+  assert.ok(!/<main[\s>]/.test(art.fragment), 'fragment must not carry a document-level <main>');
+});
+
+test('composeArtifact: comparison fragment drops <main> and the decision-bar', () => {
+  const md = '# Compare\n\n## Option A\n\nPros: fast\n\n## Option B\n\nPros: simple\n\n' + 'context body sentence. '.repeat(40);
+  const art = composeArtifact({ markdown: md });
+  assert.equal(art.template, 'comparison');
+  assert.ok(!/<main[\s>]/.test(art.fragment), 'no document-level main in fragment');
+  assert.ok(!art.fragment.includes('decision-bar'), 'inert decision-bar stripped');
+  assert.ok(art.fragment.includes('cc-main'), 'cc-main class preserved as a div');
+});

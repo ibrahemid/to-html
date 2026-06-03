@@ -43,8 +43,16 @@ function hasMeaningfulShape(graphLayout) {
   return maxRank >= 1;
 }
 
-function resolveGraph(markdown, sections) {
+function resolveGraph(markdown, sections, opts = {}) {
   if (typeof markdown !== 'string' || !markdown.trim()) return null;
+  if (opts && typeof opts.preferMermaid === 'string' && opts.preferMermaid.trim()) {
+    try {
+      const placed = layout(parseGraph(opts.preferMermaid));
+      if (placed && Array.isArray(placed.nodes) && placed.nodes.length >= 2 && Array.isArray(placed.edges) && placed.edges.length >= 1) {
+        return { graph: placed, sectionMap: mapNodesToSections(placed, sections || []), source: 'enrichment' };
+      }
+    } catch (_) { /* fall through to fenced/salvage resolution */ }
+  }
   const blocks = extractMermaidBlocks(markdown);
   for (const src of blocks) {
     try {

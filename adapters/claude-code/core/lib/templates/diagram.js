@@ -27,6 +27,7 @@ ${bodyHtml ? `<section class="dgm-body">${bodyHtml}</section>` : ''}`;
 
   return {
     title,
+    body,
     html: buildShell({
       classname: 'tpl-dgm',
       title,

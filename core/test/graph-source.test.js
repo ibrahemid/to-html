@@ -99,3 +99,20 @@ test('resolveGraph: salvages a bare graph when the fenced block is too small', (
   assert.equal(out.source, 'salvage');
   assert.ok(out.graph.nodes.length >= 3);
 });
+
+test('resolveGraph: preferMermaid wins and reports source enrichment', () => {
+  const r = resolveGraph('Some prose with no graph.', [], { preferMermaid: 'graph TD\n  A[Start] --> B[End]' });
+  assert.ok(r, 'should resolve from preferMermaid');
+  assert.equal(r.source, 'enrichment');
+  assert.ok(r.graph && Array.isArray(r.graph.nodes) && r.graph.nodes.length >= 2);
+});
+
+test('resolveGraph: invalid preferMermaid falls through to null (no body graph)', () => {
+  const r = resolveGraph('Plain prose, no graph here at all.', [], { preferMermaid: 'not a diagram' });
+  assert.equal(r, null);
+});
+
+test('resolveGraph: empty preferMermaid is ignored', () => {
+  const r = resolveGraph('Plain prose.', [], { preferMermaid: '' });
+  assert.equal(r, null);
+});

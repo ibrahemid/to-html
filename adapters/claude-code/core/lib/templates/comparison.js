@@ -139,6 +139,7 @@ function render({ markdown, meta, override, buildShell, readAsset, tldrHtml, map
 
   return {
     title,
+    body,
     html: buildShell({
       classname: 'tpl-cmp',
       title,
