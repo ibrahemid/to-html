@@ -1,0 +1,10 @@
+{
+  "name": "@ibrahemid/to-html-shared-enrichment",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Tool-agnostic enrichment prompt + structured-output parse for to-html",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test"
+  }
+}

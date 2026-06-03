@@ -9,7 +9,8 @@ const TARGETS = [
   'adapters/claude-code/.claude-plugin/plugin.json',
   'core/package.json',
   'cli/package.json',
-  'shared/transcript/package.json'
+  'shared/transcript/package.json',
+  'shared/enrichment/package.json'
 ];
 
 class SyncVersionError extends Error {
