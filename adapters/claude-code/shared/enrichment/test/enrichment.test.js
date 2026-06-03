@@ -58,3 +58,34 @@ test('parseEnrichment: wrong type field -> null', () => {
 test('parseEnrichment: empty/whitespace tldr -> null (nothing to show)', () => {
   assert.equal(parseEnrichment(envelope({ structured_output: { tldr: '   ', mermaid: 'graph TD' } })), null);
 });
+
+test('parseEnrichment: null JSON root -> null', () => {
+  // JSON.parse('null') yields null; the !env guard must catch it.
+  assert.equal(parseEnrichment('null'), null);
+});
+
+test('parseEnrichment: non-object JSON root (number) -> null', () => {
+  // JSON.parse('42') yields 42; typeof !== 'object' must reject.
+  assert.equal(parseEnrichment('42'), null);
+});
+
+test('parseEnrichment: non-string mermaid -> null', () => {
+  // Symmetric with the non-string tldr test; locks the mermaid branch.
+  assert.equal(parseEnrichment(envelope({ structured_output: { tldr: 'x', mermaid: 42 } })), null);
+});
+
+test('parseEnrichment: missing is_error field -> null (strict success only)', () => {
+  // Invariant: a result envelope without an explicit is_error:false is treated as a failure;
+  // protects against upstream envelope drift adding new shapes we have not validated.
+  assert.equal(parseEnrichment(JSON.stringify({ type: 'result', structured_output: { tldr: 'x', mermaid: '' } })), null);
+});
+
+test('parseEnrichment: prototype-key in structured_output does not leak (defensive lock)', () => {
+  // We read so.tldr/so.mermaid by name and never spread or assign-by-key, so a stray
+  // __proto__ key cannot pollute Object.prototype. This pins the posture so a future
+  // refactor does not regress to {...so}.
+  const before = Object.prototype.polluted;
+  const out = parseEnrichment(envelope({ structured_output: { __proto__: { polluted: true }, tldr: 'ok', mermaid: '' } }));
+  assert.deepEqual(out, { tldr: 'ok', mermaid: '' });
+  assert.equal(Object.prototype.polluted, before, 'prototype must not be polluted');
+});
