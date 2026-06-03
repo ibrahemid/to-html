@@ -6,7 +6,7 @@ const { escapeHtml } = require('../sanitize');
 function splitByOptionHeadings(markdown) {
   const lines = markdown.split('\n');
   const sections = [];
-  const optionRe = /^##\s+.*\b(option|approach|alternative|variant|path)\s*([a-z\d][a-z\d]*)\s*[:\-—]?\s*(.*)$/i;
+  const optionRe = /^##\s+.*\b(option|approach|alternative|variant|path)\s*([a-z\d][a-z\d]*)\s*[:\--]?\s*(.*)$/i;
   const preamble = [];
   const slugCounts = new Map();
   let current = null;

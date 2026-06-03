@@ -81,7 +81,7 @@ function parsePlanMarkdown(markdown, options = {}) {
     if (/^```/.test(line.trim())) {
       inFence = !inFence;
       if (currentPhase && !inFence) {
-        // closing fence — let the body collect notes outside fences
+        // closing fence - let the body collect notes outside fences
       }
       continue;
     }

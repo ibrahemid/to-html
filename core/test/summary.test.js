@@ -22,7 +22,7 @@ test('extractSummary: heading-form `## TL;DR`', () => {
   assert.ok(body.includes('## Detail'));
 });
 
-test('extractSummary: returns null when absent — no synthesis', () => {
+test('extractSummary: returns null when absent - no synthesis', () => {
   const md = '# Title\n\nA paragraph with no summary marker at all.';
   const { tldr, body } = extractSummary(md);
   assert.equal(tldr, null);

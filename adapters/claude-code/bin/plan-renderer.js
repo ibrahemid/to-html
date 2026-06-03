@@ -22,7 +22,7 @@ class PlanRenderError extends Error {
 function cappedMarkdown(raw) {
   const value = typeof raw === 'string' ? raw : '';
   if (Buffer.byteLength(value, 'utf8') <= MAX_PLAN_MARKDOWN_BYTES) return value;
-  return value.slice(0, MAX_PLAN_MARKDOWN_BYTES) + '\n\n*(plan truncated — exceeded plan size cap)*';
+  return value.slice(0, MAX_PLAN_MARKDOWN_BYTES) + '\n\n*(plan truncated - exceeded plan size cap)*';
 }
 
 async function renderPlan(input) {

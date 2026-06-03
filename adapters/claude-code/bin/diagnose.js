@@ -37,13 +37,13 @@ function main() {
   const cwd = process.env.CLAUDE_PROJECT_DIR || process.cwd();
   const state = readState(cwd);
 
-  console.log('— to-html diagnostics —');
+  console.log('- to-html diagnostics -');
   console.log(pad('plugin version', manifest.version));
   console.log(pad('plugin path', __dirname));
   console.log(pad('node', process.version));
   console.log(pad('platform', `${os.platform()} ${os.release()}`));
   console.log('');
-  console.log('— state —');
+  console.log('- state -');
   console.log(pad('project cwd', state.cwd));
   console.log(pad('mode', state.mode));
   console.log(pad('autoOpen', String(state.autoOpen)));
@@ -55,7 +55,7 @@ function main() {
   console.log('');
 
   const events = readRecent(20);
-  console.log(`— recent hook events (${events.length}) —`);
+  console.log(`- recent hook events (${events.length}) -`);
   if (events.length === 0) {
     console.log('(none yet)');
     console.log('');

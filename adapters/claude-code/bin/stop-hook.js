@@ -23,7 +23,7 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-// Pick the most recent SUBSTANTIVE assistant message — skipping plugin-control
+// Pick the most recent SUBSTANTIVE assistant message - skipping plugin-control
 // chatter (the /to-html toggle status, the auto-open question) and anything the
 // classifier would skip. This is what the user was actually looking at when they
 // toggled, not the toggle's own reply.
@@ -66,7 +66,7 @@ function planToMarkdownStub(plan) {
 // the transcript shortly *after* firing the Stop hook, so an early read can miss
 // the new reply and surface the previous turn instead. A candidate is "stale" if
 // it is empty, too short, or identical to the reply we already rendered
-// (lastHash) — the last case means the new reply has not landed yet. Retry a few
+// (lastHash) - the last case means the new reply has not landed yet. Retry a few
 // times, accepting the first fresh, substantive read.
 async function resolveTarget(transcriptPath, lastHash, opts) {
   const delayMs = opts && Number.isFinite(opts.delayMs) ? opts.delayMs : RETRY_DELAY_MS;
@@ -125,7 +125,7 @@ async function main() {
   const state = readState(cwd);
 
   if (state.mode !== 'on') {
-    appendEvent({ kind: 'stop', mode: 'off', cwd, note: 'skipped — mode off' });
+    appendEvent({ kind: 'stop', mode: 'off', cwd, note: 'skipped - mode off' });
     process.exit(0);
   }
 

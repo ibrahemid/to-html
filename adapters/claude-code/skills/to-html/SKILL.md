@@ -36,11 +36,11 @@ node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config show
 
 Valid keys and values:
 
-- `auto-open` — `yes` | `no`
-- `theme` — `auto` | `light` | `dark` | `sepia`
-- `size` — `s` | `m` | `l` | `xl`
-- `width` — `narrow` | `comfortable` | `wide`
-- `font` — `sans` | `serif`
+- `auto-open` - `yes` | `no`
+- `theme` - `auto` | `light` | `dark` | `sepia`
+- `size` - `s` | `m` | `l` | `xl`
+- `width` - `narrow` | `comfortable` | `wide`
+- `font` - `sans` | `serif`
 
 Print the `message` field. If the cli returned `ok: false`, print the `error` field as the one line.
 
