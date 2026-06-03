@@ -18,13 +18,29 @@ function extractMermaidBlocks(markdown) {
   return blocks;
 }
 
+function sanitizeLabel(raw) {
+  // Mermaid labels routinely arrive with <br/>, <br>, and other HTML the model adds for
+  // visual line breaks. The SVG renderer escapes them, so they render as literal text.
+  // Strip the tag, replace with a space, collapse whitespace.
+  return String(raw)
+    .replace(/^"|"$/g, '')
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function sanitizeEdgeLabel(raw) {
+  return sanitizeLabel(raw);
+}
+
 function parseTokens(segment, tokenPattern) {
   const matches = [...segment.matchAll(tokenPattern)];
   const out = [];
   for (const m of matches) {
     const id = m[1];
     const label = m[2] || m[3] || m[4] || null;
-    out.push({ id, label: label ? label.replace(/^"|"$/g, '').trim() : null });
+    out.push({ id, label: label ? sanitizeLabel(label) : null });
   }
   return out;
 }
@@ -80,7 +96,7 @@ function parseGraph(source) {
       if (!part) continue;
       const arrowMatch = part.match(arrowOnly);
       if (arrowMatch) {
-        pendingArrow = { kind: arrowMatch[1], label: arrowMatch[2] ? arrowMatch[2].trim() : '' };
+        pendingArrow = { kind: arrowMatch[1], label: arrowMatch[2] ? sanitizeEdgeLabel(arrowMatch[2]) : '' };
         continue;
       }
       const tokens = parseTokens(part, tokenPattern);
@@ -108,5 +124,6 @@ module.exports = {
   MERMAID_FENCE,
   extractMermaidBlocks,
   parseGraph,
-  parseTokens
+  parseTokens,
+  sanitizeLabel
 };

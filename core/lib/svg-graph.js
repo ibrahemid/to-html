@@ -34,10 +34,19 @@ function renderSvg(graphLayout, options = {}) {
   const isHorizontal = direction === 'LR';
   const sectionMap = (options.sectionMap instanceof Map) ? options.sectionMap : null;
 
+  // Stagger labels along the edge path so multiple edges between similar midpoints
+  // do not collide into illegible strings. t in {0.40, 0.50, 0.60, 0.45, 0.55}
+  // rotated by edge index gives 5 distinct positions before repeating.
+  const T_SCHEDULE = [0.5, 0.6, 0.4, 0.55, 0.45];
   const edgeMarkup = edges.map((edge, idx) => {
     const path = svgEdgePath(edge, isHorizontal);
-    const labelMidX = (edge.from.x + edge.from.w / 2 + edge.to.x + edge.to.w / 2) / 2;
-    const labelMidY = (edge.from.y + edge.from.h / 2 + edge.to.y + edge.to.h / 2) / 2;
+    const fromCx = edge.from.x + edge.from.w / 2;
+    const fromCy = edge.from.y + edge.from.h / 2;
+    const toCx = edge.to.x + edge.to.w / 2;
+    const toCy = edge.to.y + edge.to.h / 2;
+    const t = T_SCHEDULE[idx % T_SCHEDULE.length];
+    const labelMidX = fromCx + (toCx - fromCx) * t;
+    const labelMidY = fromCy + (toCy - fromCy) * t;
     const labelEl = edge.label
       ? `<text x="${labelMidX}" y="${labelMidY - 4}" class="edge-label" text-anchor="middle">${escapeHtml(edge.label)}</text>`
       : '';

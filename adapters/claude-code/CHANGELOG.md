@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.1.3
+
+### Fixed
+- Concept-map node labels stopped showing literal `<br/>` text. The diagram parser now strips `<br>`, `<br/>`, and any other HTML tags from node and edge labels before render.
+- Concept-map edge labels stopped colliding into illegible strings when multiple edges had similar midpoints. Labels are now staggered along the path.
+
+### Changed
+- Tightened the enrichment prompt: no HTML in labels, prefer 3-6 nodes, prefer arrows WITHOUT labels, return empty mermaid when the reply has no structure worth visualizing.
+
 ## v2.1.2
 
 ### Fixed
