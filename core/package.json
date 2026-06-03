@@ -4,5 +4,5 @@
   "private": true,
   "main": "lib/index.js",
   "engines": { "node": ">=18" },
-  "scripts": { "test": "node --test 'test/**/*.test.js'" }
+  "scripts": { "test": "node --test test/*.test.js test/snapshots/*.test.js" }
 }

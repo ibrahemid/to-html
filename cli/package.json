@@ -5,5 +5,5 @@
   "description": "Universal CLI for to-html (scaffold; Phase 3).",
   "bin": { "to-html": "bin/to-html.js" },
   "engines": { "node": ">=18" },
-  "scripts": { "test": "node --test 'test/**/*.test.js' || true" }
+  "scripts": { "test": "node --test test/*.test.js || true" }
 }
