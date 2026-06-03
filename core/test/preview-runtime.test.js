@@ -57,3 +57,8 @@ test('shouldBackstopReload: true only after BACKSTOP_MS pending locally', () => 
 test('scrollStashKey: stable per session path', () => {
   assert.equal(P.scrollStashKey('/x/preview.html'), P.scrollStashKey('/x/preview.html'));
 });
+
+test('MANIFEST_LOAD_GRACE_MS is exported as the file:// load budget', () => {
+  assert.equal(typeof P.MANIFEST_LOAD_GRACE_MS, 'number');
+  assert.ok(P.MANIFEST_LOAD_GRACE_MS > 0);
+});

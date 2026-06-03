@@ -78,7 +78,6 @@ module.exports = [
       'no-var': 'off',
       'prefer-const': 'off',
       'no-empty': 'off',
-      'no-implicit-globals': 'off',
       'eqeqeq': ['warn', 'smart'],
       'no-throw-literal': 'error',
       'no-self-assign': 'error',

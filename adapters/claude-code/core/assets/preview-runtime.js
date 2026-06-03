@@ -1,50 +1,51 @@
 'use strict';
 
-var MIN_INTERVAL = 600;
-var MAX_INTERVAL = 5000;
-var BACKSTOP_MS = 35000;
+(function () {
+  var MIN_INTERVAL = 600;
+  var MAX_INTERVAL = 5000;
+  var BACKSTOP_MS = 35000;
+  var MANIFEST_LOAD_GRACE_MS = 120;
 
-function nextInterval(s) {
-  if (s.pending || s.advanced) return MIN_INTERVAL;
-  return Math.min(MAX_INTERVAL, Math.round(s.current * 1.8));
-}
-
-function isTurnPending(turn, local) {
-  // The lock-free invariant bars the enricher from clearing the manifest's pending flag,
-  // and the next Stop hook only upserts its own turn. So a finished turn's manifest entry
-  // stays pending:true forever. The poller's locally-observed final chunk (knownFinal[i])
-  // is authoritative; without this gate, the chunk is re-fetched every tick and the
-  // backstop reload fires every BACKSTOP_MS for every previously-enriched turn.
-  if (!turn || !turn.pending) return false;
-  if (local && local.knownFinal && local.knownFinal[turn.i]) return false;
-  return true;
-}
-
-function selectChunksToLoad(manifest, local) {
-  if (!manifest || !Array.isArray(manifest.turns)) return [];
-  var out = [];
-  for (var k = 0; k < manifest.turns.length; k++) {
-    var t = manifest.turns[k];
-    var rendered = local.renderedRev[t.i];
-    if (rendered === undefined) { out.push(t.i); continue; }
-    if (isTurnPending(t, local)) out.push(t.i);
+  function nextInterval(s) {
+    if (s.pending || s.advanced) return MIN_INTERVAL;
+    return Math.min(MAX_INTERVAL, Math.round(s.current * 1.8));
   }
-  return out;
-}
 
-function shouldBackstopReload(turnState, now) {
-  if (!turnState || turnState.pendingSince == null) return false;
-  return (now - turnState.pendingSince) > BACKSTOP_MS;
-}
+  function isTurnPending(turn, local) {
+    // The lock-free invariant bars the enricher from clearing the manifest's pending flag,
+    // and the next Stop hook only upserts its own turn. So a finished turn's manifest entry
+    // stays pending:true forever. The poller's locally-observed final chunk (knownFinal[i])
+    // is authoritative; without this gate, the chunk is re-fetched every tick and the
+    // backstop reload fires every BACKSTOP_MS for every previously-enriched turn.
+    if (!turn || !turn.pending) return false;
+    if (local && local.knownFinal && local.knownFinal[turn.i]) return false;
+    return true;
+  }
 
-function scrollStashKey(href) { return 'tohtml-scroll:' + String(href); }
+  function selectChunksToLoad(manifest, local) {
+    if (!manifest || !Array.isArray(manifest.turns)) return [];
+    var out = [];
+    for (var k = 0; k < manifest.turns.length; k++) {
+      var t = manifest.turns[k];
+      var rendered = local.renderedRev[t.i];
+      if (rendered === undefined) { out.push(t.i); continue; }
+      if (isTurnPending(t, local)) out.push(t.i);
+    }
+    return out;
+  }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { nextInterval, isTurnPending, selectChunksToLoad, shouldBackstopReload, scrollStashKey, MIN_INTERVAL, MAX_INTERVAL, BACKSTOP_MS };
-}
+  function shouldBackstopReload(turnState, now) {
+    if (!turnState || turnState.pendingSince == null) return false;
+    return (now - turnState.pendingSince) > BACKSTOP_MS;
+  }
 
-if (typeof document !== 'undefined') {
-  (function bootstrap() {
+  function scrollStashKey(href) { return 'tohtml-scroll:' + String(href); }
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { nextInterval, isTurnPending, selectChunksToLoad, shouldBackstopReload, scrollStashKey, MIN_INTERVAL, MAX_INTERVAL, BACKSTOP_MS, MANIFEST_LOAD_GRACE_MS };
+  }
+
+  if (typeof document !== 'undefined') {
     var state = { version: 0, renderedRev: {}, knownFinal: {}, interval: MIN_INTERVAL, pendingSince: {}, nonce: 0 };
     var manifest = null;
 
@@ -102,12 +103,17 @@ if (typeof document !== 'undefined') {
     }
 
     function tick() {
+      var _prevVersion = state.version;
       state.nonce++;
       injectScript('preview-manifest.js?v=' + state.nonce, 'cc-manifest-script');
-      setTimeout(afterManifest, 120);
+      // MANIFEST_LOAD_GRACE_MS is the file:// disk-read budget for the manifest script
+      // tag to load + execute before afterManifest reads `manifest`. If the load takes
+      // longer, afterManifest sees the stale manifest, schedules another tick, and the
+      // next cycle catches up. Chosen above the verified Chrome file:// load (<50ms).
+      setTimeout(afterManifest.bind(null, _prevVersion), MANIFEST_LOAD_GRACE_MS);
     }
 
-    function afterManifest() {
+    function afterManifest(_prevVersion) {
       var advanced = false;
       var pending = false;
       var now = Date.now();
@@ -148,5 +154,5 @@ if (typeof document !== 'undefined') {
 
     restoreScroll();
     tick();
-  })();
-}
+  }
+})();
