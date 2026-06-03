@@ -1,8 +1,12 @@
 {
   "name": "@ibrahemid/to-html-shared-transcript",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": true,
   "main": "index.js",
-  "engines": { "node": ">=18" },
-  "scripts": { "test": "node --test test/*.test.js" }
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
 }

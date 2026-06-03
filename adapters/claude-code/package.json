@@ -1,6 +1,6 @@
 {
   "name": "to-html",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": true,
   "description": "Claude Code plugin - content-aware HTML rendering. Internal package; no runtime dependencies, marked is vendored.",
   "engines": {

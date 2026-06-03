@@ -3,10 +3,11 @@
 const path = require('path');
 const fs = require('fs');
 const { escapeHtml } = require('./sanitize');
-const { CSP } = require('./templates/dispatch');
 
 const ASSETS_DIR = path.join(__dirname, '..', 'assets');
 const UI_KEYS = ['theme', 'size', 'width', 'family'];
+
+const CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline' file:; base-uri 'none'; form-action 'none'";
 
 function readAsset(name) {
   const file = path.join(ASSETS_DIR, name);
