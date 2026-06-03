@@ -145,3 +145,52 @@ test('collectAssistantTexts: caps total bytes and still returns the latest entry
   assert.ok(out.length >= 1);
   assert.ok(out[out.length - 1].includes('LAST-ENTRY'));
 });
+
+const { buildPreviewUpdate } = require('../bin/stop-hook');
+
+test('buildPreviewUpdate: substantive turn is pending when enrich on', () => {
+  const u = buildPreviewUpdate({ enrich: 'on' }, { turnIndex: 3, rendered: { skipped: false } });
+  assert.equal(u.pending, true);
+});
+
+test('buildPreviewUpdate: enrich off -> not pending (prose only)', () => {
+  const u = buildPreviewUpdate({ enrich: 'off' }, { turnIndex: 3, rendered: { skipped: false } });
+  assert.equal(u.pending, false);
+});
+
+test('buildPreviewUpdate: skipped/trivial turn -> not pending', () => {
+  const u = buildPreviewUpdate({ enrich: 'on' }, { turnIndex: 3, rendered: { skipped: true } });
+  assert.equal(u.pending, false);
+});
+
+const { execFileSync } = require('node:child_process');
+const { manifestPath } = require('../lib/paths');
+const STOP_HOOK_BUG2 = path.join(__dirname, '..', 'bin', 'stop-hook.js');
+const CLI_BUG2 = path.join(__dirname, '..', 'bin', 'cli.js');
+
+test('Bug 2: a trivial turn advances the preview manifest version', () => {
+  const cache = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-bug2-'));
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-bug2-cwd-'));
+  const env = { ...process.env, XDG_CACHE_HOME: cache, CLAUDE_PROJECT_DIR: cwd };
+  execFileSync(process.execPath, [CLI_BUG2, 'toggle', 'on'], { env, encoding: 'utf8' });
+  const tx = path.join(cache, 'tx.jsonl');
+  fs.writeFileSync(tx, [
+    JSON.stringify({ type: 'user', message: { role: 'user', content: 'hi' } }),
+    JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: 'ok' } })
+  ].join('\n'));
+  const sid = 'bug2-sess';
+  execFileSync(process.execPath, [STOP_HOOK_BUG2], {
+    input: JSON.stringify({ cwd, transcript_path: tx, session_id: sid }), env, encoding: 'utf8'
+  });
+  const prevXdg = process.env.XDG_CACHE_HOME;
+  process.env.XDG_CACHE_HOME = cache;
+  let raw;
+  try { raw = fs.readFileSync(manifestPath(sid), 'utf8'); }
+  finally {
+    if (prevXdg === undefined) delete process.env.XDG_CACHE_HOME;
+    else process.env.XDG_CACHE_HOME = prevXdg;
+  }
+  const m = raw.match(/__tohtmlManifest\((.*)\);/s);
+  const manifest = JSON.parse(m[1]);
+  assert.ok(manifest.version >= 1, 'trivial turn must advance the version');
+});

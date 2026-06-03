@@ -43,7 +43,7 @@ node -e '
 const fs=require("node:fs"), path=require("node:path");
 const { sessionArtifactsDir } = require(process.argv[1]);
 const dir = sessionArtifactsDir("smoke-session");
-const files = fs.readdirSync(dir).filter((f) => f.endsWith(".html"));
+const files = fs.readdirSync(dir).filter((f) => f.endsWith(".html") && f !== "preview.html");
 if (files.length === 0) { console.error("no artifact written to " + dir); process.exit(1); }
 files.sort();
 const latest = path.join(dir, files[files.length - 1]);
@@ -55,4 +55,21 @@ if (idCount < min) {
   process.exit(1);
 }
 console.log(`OK: ${latest} (${idCount} ids)`);
+
+const previewHtml = path.join(dir, "preview.html");
+if (!fs.existsSync(previewHtml)) { console.error("FAIL: preview.html not written to " + dir); process.exit(1); }
+
+const manifestFile = path.join(dir, "preview-manifest.js");
+if (!fs.existsSync(manifestFile)) { console.error("FAIL: preview-manifest.js not written to " + dir); process.exit(1); }
+const manifestRaw = fs.readFileSync(manifestFile, "utf8");
+const versionMatch = manifestRaw.match(/"version":\s*([0-9]+)/);
+if (!versionMatch || Number(versionMatch[1]) < 1) {
+  console.error("FAIL: preview-manifest.js version not advanced: " + manifestRaw);
+  process.exit(1);
+}
+
+const turnsDir = path.join(dir, "preview-turns");
+const chunks = fs.existsSync(turnsDir) ? fs.readdirSync(turnsDir).filter((f) => f.endsWith(".js")) : [];
+if (chunks.length === 0) { console.error("FAIL: no preview-turn chunk written under " + turnsDir); process.exit(1); }
+console.log(`OK: preview.html + manifest v${versionMatch[1]} + ${chunks.length} chunk(s)`);
 ' "$ADAPTER_ROOT/lib/paths.js" "$MIN_IDS"
