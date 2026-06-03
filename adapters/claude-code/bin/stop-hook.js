@@ -2,12 +2,15 @@
 'use strict';
 
 const path = require('path');
+const { spawn } = require('child_process');
 const { readState, writeState } = require('../lib/state');
 const { render } = require('./render');
 const { renderPlan } = require('./plan-renderer');
-const { readJsonStdin } = require('../lib/io');
+const { readJsonStdin, writeFileAtomic } = require('../lib/io');
 const { appendEvent } = require('../lib/diag');
 const { classify } = require('../core/lib/classifier');
+const preview = require('../lib/preview');
+const { chunkInputPath } = require('../lib/paths');
 const transcriptAdapter = require('../shared/transcript').getAdapter('claude-code');
 const { stripControlLines, collectAssistantTexts, hashText, isStale: isStaleShared } = transcriptAdapter;
 
@@ -20,7 +23,7 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-// Pick the most recent SUBSTANTIVE assistant message — skipping plugin-control
+// Pick the most recent SUBSTANTIVE assistant message - skipping plugin-control
 // chatter (the /to-html toggle status, the auto-open question) and anything the
 // classifier would skip. This is what the user was actually looking at when they
 // toggled, not the toggle's own reply.
@@ -63,7 +66,7 @@ function planToMarkdownStub(plan) {
 // the transcript shortly *after* firing the Stop hook, so an early read can miss
 // the new reply and surface the previous turn instead. A candidate is "stale" if
 // it is empty, too short, or identical to the reply we already rendered
-// (lastHash) — the last case means the new reply has not landed yet. Retry a few
+// (lastHash) - the last case means the new reply has not landed yet. Retry a few
 // times, accepting the first fresh, substantive read.
 async function resolveTarget(transcriptPath, lastHash, opts) {
   const delayMs = opts && Number.isFinite(opts.delayMs) ? opts.delayMs : RETRY_DELAY_MS;
@@ -88,24 +91,53 @@ async function resolveTarget(transcriptPath, lastHash, opts) {
   return { ...best, retries, firstLen };
 }
 
+function buildPreviewUpdate(state, { turnIndex: _turnIndex, rendered }) {
+  const enrichOn = state.enrich !== 'off';
+  const pending = enrichOn && rendered && rendered.skipped === false;
+  return { pending };
+}
+
+// Bug 2 fix: a trivial / skipped / no-substantive-text turn must still advance the
+// preview so an open tab never shows a stale assistant turn.
+function advanceTrivial(sessionId, turnIndex, uiDefaults) {
+  preview.ensurePreviewHtml(sessionId, uiDefaults);
+  preview.writeChunk(sessionId, turnIndex || 0, {
+    i: turnIndex || 0,
+    title: '(no substantive reply)',
+    template: 'trivial',
+    rev: 2,
+    enriched: false,
+    final: true,
+    fragment: '<p class="cc-trivial">No substantive reply this turn.</p>'
+  });
+  preview.updateManifest(sessionId, { turnIndex: turnIndex || 0, pending: false });
+}
+
 async function main() {
+  // Reentrancy guard: when the detached enricher (which inherits env) somehow
+  // triggers a Stop event, this short-circuits so the enricher cannot recurse
+  // into rendering. Matches the prompt-hook guard added in T1.
+  if (process.env.TO_HTML_ENRICHING === '1') process.exit(0);
+
   const payload = await readJsonStdin();
   const cwd = (payload && typeof payload.cwd === 'string') ? payload.cwd
     : (process.env.CLAUDE_PROJECT_DIR || process.cwd());
   const state = readState(cwd);
 
   if (state.mode !== 'on') {
-    appendEvent({ kind: 'stop', mode: 'off', cwd, note: 'skipped — mode off' });
+    appendEvent({ kind: 'stop', mode: 'off', cwd, note: 'skipped - mode off' });
     process.exit(0);
   }
 
+  const sessionId = payload.session_id || payload.sessionId || 'unknown';
   const transcriptPath = payload.transcript_path || payload.transcriptPath || null;
   const stable = await resolveTarget(transcriptPath, state.lastRenderedTextHash);
   const text = stable.text;
   const turnIndex = stable.turnIndex;
 
   if (!text || !text.trim()) {
-    appendEvent({ kind: 'stop', mode: 'on', cwd, note: 'no substantive text', firstLen: stable.firstLen, retries: stable.retries });
+    advanceTrivial(sessionId, turnIndex, state.uiDefaults);
+    appendEvent({ kind: 'stop', mode: 'on', cwd, note: 'trivial turn, preview advanced', firstLen: stable.firstLen, retries: stable.retries });
     process.exit(0);
   }
 
@@ -115,7 +147,6 @@ async function main() {
     process.exit(0);
   }
 
-  const sessionId = payload.session_id || payload.sessionId || 'unknown';
   const projectName = cwd ? path.basename(cwd) : '';
 
   const window = (state.renderThreshold && Number.isFinite(state.renderThreshold.manualToggleWindowMs))
@@ -149,11 +180,35 @@ async function main() {
       textLen: text.length,
       retries: stable.retries
     });
-    if (!result.skipped) {
-      messages.push(`[to-html · ${result.template}] ${result.url}`);
-    }
-    if (!result.skipped) {
+    if (result.skipped) {
+      advanceTrivial(sessionId, turnIndex, state.uiDefaults);
+    } else {
       writeState(cwd, { lastRenderedTextHash: textHash });
+
+      const previewFile = preview.ensurePreviewHtml(sessionId, state.uiDefaults);
+      messages.push(`[to-html · preview] file://${previewFile}`);
+      // single-writer invariant: only this serialized Stop hook writes the manifest. The detached enricher (bin/enrich.js) writes only its turn's chunk and never the manifest, so manifest writes never collide.
+      const upd = buildPreviewUpdate(state, { turnIndex, rendered: result });
+      preview.updateManifest(sessionId, { turnIndex, pending: upd.pending });
+
+      if (upd.pending) {
+        try {
+          const inputPath = chunkInputPath(sessionId, turnIndex);
+          writeFileAtomic(inputPath, JSON.stringify({
+            markdown: text, sessionId, turnIndex, project: projectName,
+            uiDefaults: state.uiDefaults, renderThreshold: state.renderThreshold,
+            enrichModel: state.enrichModel || null
+          }));
+          const child = spawn(process.execPath, [path.join(__dirname, 'enrich.js'), inputPath], {
+            detached: true, stdio: 'ignore',
+            env: Object.assign({}, process.env, { TO_HTML_ENRICHING: '1' })
+          });
+          child.unref();
+        } catch (_err) {
+          // enrich.js may not exist yet (T10), or spawn failed. Archive + prose chunk already on disk; preview shows prose-only forever for this turn. Acceptable fail-safe.
+          appendEvent({ kind: 'enrich-spawn', cwd, error: _err.message });
+        }
+      }
     }
   } catch (err) {
     appendEvent({ kind: 'stop', mode: 'on', cwd, error: err.message, textLen: text.length, retries: stable.retries });
@@ -194,4 +249,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { stripControlLines, collectAssistantTexts, pickRenderTarget, resolveTarget, hashText };
+module.exports = { stripControlLines, collectAssistantTexts, pickRenderTarget, resolveTarget, hashText, buildPreviewUpdate, advanceTrivial };

@@ -23,13 +23,14 @@ function renderMarkdown(markdown, opts = {}) {
   const maxMarkdownBytes = Number.isFinite(opts.maxMarkdownBytes) ? opts.maxMarkdownBytes : DEFAULT_MAX_MARKDOWN_BYTES;
   const nowIso = typeof opts.nowIso === 'string' ? opts.nowIso : null;
   const titleOverride = typeof opts.titleOverride === 'string' && opts.titleOverride.length > 0 ? opts.titleOverride : null;
+  const enrichment = (opts.enrichment && typeof opts.enrichment === 'object') ? opts.enrichment : null;
 
   const capped = cappedMarkdown(markdown, maxMarkdownBytes);
 
   if (!capped || !capped.trim()) {
     return {
       html: '', template: 'skip', title: '', reason: 'empty-markdown',
-      skipped: true, hasTldr: false, hasGraph: false, sectionCount: 0
+      skipped: true, hasTldr: false, hasGraph: false, sectionCount: 0, fragment: ''
     };
   }
 
@@ -37,7 +38,7 @@ function renderMarkdown(markdown, opts = {}) {
   if (classification.template === 'skip') {
     return {
       html: '', template: 'skip', title: '', reason: classification.reason,
-      skipped: true, hasTldr: false, hasGraph: false, sectionCount: 0
+      skipped: true, hasTldr: false, hasGraph: false, sectionCount: 0, fragment: ''
     };
   }
 
@@ -47,7 +48,7 @@ function renderMarkdown(markdown, opts = {}) {
     if (!gate.render) {
       return {
         html: '', template: classification.template, title: '', reason: gate.reason,
-        skipped: true, hasTldr: false, hasGraph: false, sectionCount: 0
+        skipped: true, hasTldr: false, hasGraph: false, sectionCount: 0, fragment: ''
       };
     }
   }
@@ -57,13 +58,14 @@ function renderMarkdown(markdown, opts = {}) {
     classification,
     meta,
     uiDefaults,
-    nowIso
+    nowIso,
+    enrichment
   });
 
   if (artifact.skipped) {
     return {
       html: '', template: artifact.template || 'skip', title: '', reason: artifact.reason,
-      skipped: true, hasTldr: false, hasGraph: false, sectionCount: 0
+      skipped: true, hasTldr: false, hasGraph: false, sectionCount: 0, fragment: ''
     };
   }
 
@@ -77,7 +79,8 @@ function renderMarkdown(markdown, opts = {}) {
     skipped: false,
     hasTldr: artifact.hasTldr,
     hasGraph: artifact.hasGraph,
-    sectionCount: artifact.sectionCount
+    sectionCount: artifact.sectionCount,
+    fragment: artifact.fragment
   };
 }
 

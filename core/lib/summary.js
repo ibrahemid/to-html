@@ -1,7 +1,7 @@
 'use strict';
 
-const INLINE_RE = /^>?\s*(?:\*\*|__)?\s*TL;?DR\s*[:\-—]?\s*(?:\*\*|__)?\s*(.+?)\s*$/im;
-const HEADING_RE = /^(#{1,3})\s+TL;?DR\s*[:\-—]?\s*$/im;
+const INLINE_RE = /^>?\s*(?:\*\*|__)?\s*TL;?DR\s*[:\--]?\s*(?:\*\*|__)?\s*(.+?)\s*$/im;
+const HEADING_RE = /^(#{1,3})\s+TL;?DR\s*[:\--]?\s*$/im;
 
 function fenceRanges(markdown) {
   const ranges = [];

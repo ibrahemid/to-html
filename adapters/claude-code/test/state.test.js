@@ -111,3 +111,50 @@ test('uiDefaults merge accepts valid values and rejects invalid', () => {
   assert.equal(s2.uiDefaults.theme, 'dark');
   assert.equal(s2.uiDefaults.size, 'l');
 });
+
+test('DEFAULT_STATE includes enrich on + a haiku-class enrichModel', () => {
+  clearState();
+  const s = readState(TEST_CWD);
+  assert.equal(s.enrich, 'on');
+  assert.equal(typeof s.enrichModel, 'string');
+  assert.ok(s.enrichModel.length > 0);
+});
+
+test('schema migration: v4 state file gets enrich defaults on read (schemaVersion bumped to 5)', () => {
+  clearState();
+  const file = readState(TEST_CWD).__file;
+  fs.writeFileSync(file, JSON.stringify({
+    mode: 'on',
+    autoOpen: true,
+    activePlan: null,
+    schemaVersion: 4
+  }), 'utf8');
+  const s = readState(TEST_CWD);
+  assert.equal(s.enrich, 'on');
+  assert.equal(typeof s.enrichModel, 'string');
+  assert.ok(s.enrichModel.length > 0);
+  assert.equal(s.schemaVersion, SCHEMA_VERSION);
+  assert.equal(SCHEMA_VERSION, 5);
+});
+
+test('writeState round-trips enrich + enrichModel', () => {
+  clearState();
+  const s1 = writeState(TEST_CWD, { enrich: 'off' });
+  assert.equal(s1.enrich, 'off');
+  const s2 = writeState(TEST_CWD, { enrichModel: 'claude-haiku-4-5-20251001' });
+  assert.equal(s2.enrichModel, 'claude-haiku-4-5-20251001');
+});
+
+test('enrich is coerced to on for invalid values; enrichModel falls back to default when empty', () => {
+  clearState();
+  const file = readState(TEST_CWD).__file;
+  fs.writeFileSync(file, JSON.stringify({
+    mode: 'off',
+    schemaVersion: 5,
+    enrich: 'maybe',
+    enrichModel: '   '
+  }), 'utf8');
+  const s = readState(TEST_CWD);
+  assert.equal(s.enrich, 'on');
+  assert.ok(s.enrichModel.length > 0);
+});

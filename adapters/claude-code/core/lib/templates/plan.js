@@ -118,14 +118,16 @@ function renderFromPlan({ plan, meta, override, buildShell, readAsset, tldrHtml,
   const extras = `<meta name="cc-plan-id" content="${escapeHtml(plan.planId || '')}">
 <script type="application/json" id="plan-data">${planJson}</script>`;
 
+  const body = buildBody(plan);
   return {
     title,
+    body,
     html: buildShell({
       classname: 'tpl-plan',
       title,
       styles: readAsset('plan.css'),
       headExtras: extras,
-      body: buildBody(plan),
+      body,
       skipMainWrapper: true,
       scripts: `<script>${readAsset('plan-runtime.js')}</script>`,
       autoRefreshSeconds: 3,

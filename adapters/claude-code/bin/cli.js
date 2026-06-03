@@ -6,7 +6,7 @@ const { homeShortcut, resolveCacheRoot } = require('../lib/paths');
 
 const KNOWN_TOGGLE_ARGS = new Set(['on', 'off', 'status', 'reset', 'toggle']);
 const KNOWN_AUTO_OPEN_ARGS = new Set(['yes', 'no', 'true', 'false', 'on', 'off']);
-const CONFIG_KEYS = new Set(['auto-open', 'theme', 'size', 'width', 'font', 'show']);
+const CONFIG_KEYS = new Set(['auto-open', 'theme', 'size', 'width', 'font', 'show', 'enrich', 'enrich-model']);
 
 function parseArg(value, allowed) {
   if (value === undefined || value === null) return null;
@@ -37,6 +37,8 @@ function snapshot(state, changed) {
     mode: state.mode,
     autoOpen: state.autoOpen,
     uiDefaults: state.uiDefaults,
+    enrich: state.enrich,
+    enrichModel: state.enrichModel,
     cwd: state.cwd,
     stateFile: state.__file,
     changed,
@@ -91,6 +93,17 @@ function actionConfig(key, value) {
   if (k === 'auto-open') {
     if (!KNOWN_AUTO_OPEN_ARGS.has(v)) fail(`auto-open expects yes/no`);
     return emit(snapshot(writeState(null, { autoOpen: coerceBool(v) }), true));
+  }
+
+  if (k === 'enrich') {
+    if (v !== 'on' && v !== 'off') fail('enrich expects on/off');
+    return emit(snapshot(writeState(null, { enrich: v }), true));
+  }
+
+  if (k === 'enrich-model') {
+    const raw = String(value == null ? '' : value).trim();
+    if (raw === '') fail('enrich-model requires a model id');
+    return emit(snapshot(writeState(null, { enrichModel: raw }), true));
   }
 
   const uiKey = k === 'font' ? 'family' : k;

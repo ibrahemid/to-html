@@ -9,10 +9,6 @@ The user invoked `/to-html`. Inspect their exact text and pick a flow:
 - starts with `config` (e.g. `/to-html config auto-open yes`) → **config flow**
 - otherwise → **toggle flow**
 
-## Authoring contract (when mode is on)
-
-When `/to-html` mode is on, lead substantial replies with `**TL;DR:** <one or two sentences>`. When the answer has parts that relate (flow, dependencies, comparison, dataflow), include a fenced ` ```mermaid ` block (`graph TD` or `graph LR`) whose node labels echo your section headings. The renderer hoists the TL;DR into a band and renders the mermaid as an interactive map cross-linked to the body. Trivial replies (under ~600 chars with no structure) render nothing.
-
 ## Toggle flow
 
 Run one Bash call:
@@ -40,11 +36,11 @@ node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config show
 
 Valid keys and values:
 
-- `auto-open` — `yes` | `no`
-- `theme` — `auto` | `light` | `dark` | `sepia`
-- `size` — `s` | `m` | `l` | `xl`
-- `width` — `narrow` | `comfortable` | `wide`
-- `font` — `sans` | `serif`
+- `auto-open` - `yes` | `no`
+- `theme` - `auto` | `light` | `dark` | `sepia`
+- `size` - `s` | `m` | `l` | `xl`
+- `width` - `narrow` | `comfortable` | `wide`
+- `font` - `sans` | `serif`
 
 Print the `message` field. If the cli returned `ok: false`, print the `error` field as the one line.
 

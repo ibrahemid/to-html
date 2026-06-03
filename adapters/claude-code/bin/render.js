@@ -3,9 +3,11 @@
 
 const path = require('path');
 const { sessionArtifactsDir, safeSessionSegment } = require('../lib/paths');
-const { openInBrowser, clickableUrl } = require('../lib/open');
+const openLib = require('../lib/open');
+const { clickableUrl } = openLib;
 const { readJsonStdin, writeFileAtomic } = require('../lib/io');
 const { renderMarkdown } = require('../core/lib/index');
+const preview = require('../lib/preview');
 
 class RenderError extends Error {
   constructor(message) { super(message); this.name = 'RenderError'; }
@@ -36,11 +38,13 @@ async function render(input) {
   const autoOpen = input.autoOpen === true;
   const trigger = input.trigger === 'manual' ? 'manual' : 'auto';
 
+  const enrichment = (input.enrichment && typeof input.enrichment === 'object') ? input.enrichment : null;
   const result = renderMarkdown(input.markdown, {
     trigger,
     meta: { turnIndex, sessionId, project },
     uiDefaults: input.uiDefaults || null,
-    renderThreshold: input.renderThreshold || null
+    renderThreshold: input.renderThreshold || null,
+    enrichment
   });
 
   if (result.skipped) {
@@ -52,9 +56,27 @@ async function render(input) {
   const fullPath = path.join(dir, filename);
   writeFileAtomic(fullPath, result.html);
 
+  const enriched = !!(enrichment && (enrichment.tldr || enrichment.graph));
+  try {
+    preview.writeChunk(sessionId, turnIndex, {
+      i: turnIndex,
+      title: result.title,
+      template: result.template,
+      rev: enriched ? 2 : 1,
+      enriched,
+      final: enriched,
+      fragment: result.fragment || ''
+    });
+  } catch (_err) {
+    // archive already on disk; chunk write failure degrades the live preview only.
+  }
+
   let openError = null;
   if (autoOpen) {
-    try { openInBrowser(fullPath); } catch (err) { openError = err.message; }
+    try {
+      const previewFile = preview.ensurePreviewHtml(sessionId, input.uiDefaults || null);
+      openLib.openInBrowser(previewFile);
+    } catch (err) { openError = err.message; }
   }
 
   return {
@@ -68,7 +90,8 @@ async function render(input) {
     opened: !!autoOpen && !openError,
     openError,
     turnIndex,
-    sessionId
+    sessionId,
+    enriched
   };
 }
 

@@ -61,6 +61,7 @@ async function handleExitPlanMode(payload) {
 }
 
 async function main() {
+  if (process.env.TO_HTML_ENRICHING === '1') process.exit(0);
   const payload = await readJsonStdin();
   if (!payload || typeof payload !== 'object') {
     appendEvent({ kind: 'post-tool', note: 'empty payload' });

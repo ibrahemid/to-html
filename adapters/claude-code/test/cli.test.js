@@ -232,3 +232,31 @@ test('cli: isolated tmp dirs produce independent state', () => {
   const r = run(['status'], tmp2);
   assert.equal(r.mode, 'off');
 });
+
+test('config enrich on/off persists', () => {
+  const tmp = makeTmp();
+  const off = run(['config', 'enrich', 'off'], tmp);
+  assert.equal(off.ok, true);
+  const show = run(['config', 'show'], tmp);
+  assert.equal(show.ok, true);
+  assert.match(JSON.stringify(show), /"enrich":"off"/);
+});
+
+test('config enrich rejects invalid value', () => {
+  const tmp = makeTmp();
+  const out = runExpectFail(['config', 'enrich', 'maybe'], tmp);
+  assert.equal(out.ok, false);
+  assert.match(out.error || '', /on|off/i);
+});
+
+test('config enrich-model accepts a non-empty model id', () => {
+  const tmp = makeTmp();
+  const out = run(['config', 'enrich-model', 'claude-haiku-4-5-20251001'], tmp);
+  assert.equal(out.ok, true);
+});
+
+test('config enrich-model rejects empty', () => {
+  const tmp = makeTmp();
+  const out = runExpectFail(['config', 'enrich-model', ''], tmp);
+  assert.equal(out.ok, false);
+});

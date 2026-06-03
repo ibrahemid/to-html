@@ -13,7 +13,11 @@ class StateError extends Error {
   }
 }
 
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
+
+const DEFAULT_ENRICH = 'on';
+const DEFAULT_ENRICH_MODEL = 'claude-haiku-4-5-20251001';
+const VALID_ENRICH_VALUES = new Set(['on', 'off']);
 
 const DEFAULT_UI = Object.freeze({
   theme: 'auto',
@@ -42,6 +46,8 @@ const DEFAULT_STATE = Object.freeze({
   autoOpen: false,
   uiDefaults: DEFAULT_UI,
   renderThreshold: DEFAULT_RENDER_THRESHOLD,
+  enrich: DEFAULT_ENRICH,
+  enrichModel: DEFAULT_ENRICH_MODEL,
   cwd: null,
   activePlan: null,
   lastRenderedTextHash: null,
@@ -122,6 +128,14 @@ function migrate(parsed) {
     migrated.renderThreshold = mergeRenderThreshold(migrated.renderThreshold);
     if (migrated.autoOpen == null) migrated.autoOpen = false;
   }
+  if (incomingVersion < 5) {
+    if (typeof migrated.enrich !== 'string' || !VALID_ENRICH_VALUES.has(migrated.enrich)) {
+      migrated.enrich = DEFAULT_ENRICH;
+    }
+    if (typeof migrated.enrichModel !== 'string' || migrated.enrichModel.trim() === '') {
+      migrated.enrichModel = DEFAULT_ENRICH_MODEL;
+    }
+  }
   return migrated;
 }
 
@@ -135,12 +149,24 @@ function quarantineBadFile(file, raw) {
   }
 }
 
+function coerceEnrich(value) {
+  return value === 'off' ? 'off' : DEFAULT_ENRICH;
+}
+
+function coerceEnrichModel(value) {
+  if (typeof value !== 'string') return DEFAULT_ENRICH_MODEL;
+  const trimmed = value.trim();
+  return trimmed === '' ? DEFAULT_ENRICH_MODEL : trimmed;
+}
+
 function normalize(state) {
   return {
     ...state,
     autoOpen: state.autoOpen === true,
     uiDefaults: mergeUiDefaults(state.uiDefaults),
-    renderThreshold: mergeRenderThreshold(state.renderThreshold)
+    renderThreshold: mergeRenderThreshold(state.renderThreshold),
+    enrich: coerceEnrich(state.enrich),
+    enrichModel: coerceEnrichModel(state.enrichModel)
   };
 }
 
@@ -187,7 +213,10 @@ module.exports = {
   DEFAULT_STATE,
   DEFAULT_UI,
   DEFAULT_RENDER_THRESHOLD,
+  DEFAULT_ENRICH,
+  DEFAULT_ENRICH_MODEL,
   VALID_UI_VALUES,
+  VALID_ENRICH_VALUES,
   SCHEMA_VERSION,
   resolveProjectKey,
   readState,

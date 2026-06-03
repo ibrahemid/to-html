@@ -4,6 +4,8 @@
 
 ### Changed
 - Extracted the renderer into a shared core in `ibrahemid/to-html`; the plugin is installed via git-subdir from that repo. No end-user behavior change: output is byte-identical for the same input.
+- The plugin no longer injects a TL;DR + mermaid authoring contract into the conversation. The model writes naturally; to-html derives the summary and concept map after the fact via a detached, fail-safe enrichment call (configurable: /to-html config enrich on|off, enrich-model <id>).
+- auto-open now opens a live per-session preview that shows a timeline of turns and updates in place. Per-turn archive files are unchanged.
 
 ## v2.0.3
 
@@ -67,12 +69,12 @@
 - **Plain-text auto-open prompt.** The skill now asks the auto-open question through the native `AskUserQuestion` UI instead of a `(yes/no)` text line.
 
 ### Note
-The retry-on-short-read logic from v1.0.2 still applies — it now retries the substantive-target resolution, so a mid-flush transcript no longer yields a stale or empty render. 72 tests (was 64); 8 new cover control-stripping and last-substantive selection, verified against the real transcript that exposed the bug.
+The retry-on-short-read logic from v1.0.2 still applies - it now retries the substantive-target resolution, so a mid-flush transcript no longer yields a stale or empty render. 72 tests (was 64); 8 new cover control-stripping and last-substantive selection, verified against the real transcript that exposed the bug.
 
 ## v1.1.0
 
 ### Added
-- **`diagram` template.** When a reply contains a fenced ` ```mermaid ` block with `graph TD/LR` syntax, the Stop hook parses it (`lib/diagram-parser.js`), computes a topological layout (`lib/diagram-layout.js`), and renders pure SVG. Hover a node to dim the rest and trace its incoming and outgoing edges. Click to lock the focus; click outside to clear. No mermaid runtime — the diagram ships as plain SVG inside the artifact, fits the existing CSP.
+- **`diagram` template.** When a reply contains a fenced ` ```mermaid ` block with `graph TD/LR` syntax, the Stop hook parses it (`lib/diagram-parser.js`), computes a topological layout (`lib/diagram-layout.js`), and renders pure SVG. Hover a node to dim the rest and trace its incoming and outgoing edges. Click to lock the focus; click outside to clear. No mermaid runtime - the diagram ships as plain SVG inside the artifact, fits the existing CSP.
 - **Prose template** with serif body, drop cap, roman-numeral section markers, and a reading-time estimate. (Removed in v2.0.0.)
 - Six templates total (was four user-visible): `diagram`, `plan`, `comparison`, `explainer`, `prose`, `skip`.
 
@@ -89,12 +91,12 @@ The retry-on-short-read logic from v1.0.2 still applies — it now retries the s
 - Diag log now records `textLen` and `retries` per event so timing issues are visible at a glance.
 
 ### Why
-Symptom: turning HTML mode on in a fresh CC session, asking for a repo overview, getting a substantive multi-section reply — but no `[to-html · ...]` line and no file. `/to-html diag` showed the hook *was* firing, just classifying the wrong content. Root cause was the transcript-flush race, not registration.
+Symptom: turning HTML mode on in a fresh CC session, asking for a repo overview, getting a substantive multi-section reply - but no `[to-html · ...]` line and no file. `/to-html diag` showed the hook *was* firing, just classifying the wrong content. Root cause was the transcript-flush race, not registration.
 
 ## v1.0.1
 
 ### Added
-- `/to-html diag` (or `debug`, `doctor`, `status`) prints plugin version, current mode, state file path, recent hook events, and recovery hints. Run it whenever the hook seems silent — it tells you whether the Stop hook is firing at all.
+- `/to-html diag` (or `debug`, `doctor`, `status`) prints plugin version, current mode, state file path, recent hook events, and recovery hints. Run it whenever the hook seems silent - it tells you whether the Stop hook is firing at all.
 - `lib/diag.js` writes a one-line JSON event per hook invocation to `~/Library/Caches/cc-to-html/diag/hook.log` (capped at 256 KB / 200 lines).
 - `bin/diagnose.js` reads state + recent log + version into a single human-readable report.
 
@@ -121,7 +123,7 @@ Symptom: turning HTML mode on in a fresh CC session, asking for a repo overview,
 - Schema migration in `readState`. Old `activePlan` shapes from previous versions are dropped on load.
 - Markdown size cap (2 MB). Plan markdown cap (512 KB). Override fence cap (64 KB).
 - Stdin read in hooks has a 5-second timeout. Hooks never hang.
-- Transcript line cap (1 MB) — pathological lines are skipped, not parsed.
+- Transcript line cap (1 MB) - pathological lines are skipped, not parsed.
 - `post-tool-hook` defensively coerces `tool_input` whether it arrives as object, JSON string, or plain plan markdown.
 - Plan extractor tracks fenced code blocks. Tasks inside ``` fences are no longer parsed.
 - Plan extractor deduplicates phase and task IDs on collisions.

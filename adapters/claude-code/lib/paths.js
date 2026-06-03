@@ -77,6 +77,26 @@ function homeShortcut(absolute) {
   return absolute;
 }
 
+function previewHtmlPath(rawSessionId) {
+  return path.join(sessionArtifactsDir(rawSessionId), 'preview.html');
+}
+
+function manifestPath(rawSessionId) {
+  return path.join(sessionArtifactsDir(rawSessionId), 'preview-manifest.js');
+}
+
+function turnsDir(rawSessionId) {
+  return ensureDir(path.join(sessionArtifactsDir(rawSessionId), 'preview-turns'));
+}
+
+function chunkPath(rawSessionId, turnIndex) {
+  return path.join(turnsDir(rawSessionId), String(turnIndex).padStart(4, '0') + '.js');
+}
+
+function chunkInputPath(rawSessionId, turnIndex) {
+  return path.join(turnsDir(rawSessionId), String(turnIndex).padStart(4, '0') + '.input.json');
+}
+
 module.exports = {
   APP,
   PathResolutionError,
@@ -87,5 +107,10 @@ module.exports = {
   safeSessionSegment,
   assertContained,
   sessionArtifactsDir,
-  homeShortcut
+  homeShortcut,
+  previewHtmlPath,
+  manifestPath,
+  turnsDir,
+  chunkPath,
+  chunkInputPath
 };

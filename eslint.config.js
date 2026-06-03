@@ -59,6 +59,7 @@ module.exports = [
         document: 'readonly',
         window: 'readonly',
         navigator: 'readonly',
+        location: 'readonly',
         sessionStorage: 'readonly',
         localStorage: 'readonly',
         Event: 'readonly',
@@ -68,7 +69,8 @@ module.exports = [
         setTimeout: 'readonly',
         setInterval: 'readonly',
         clearTimeout: 'readonly',
-        clearInterval: 'readonly'
+        clearInterval: 'readonly',
+        module: 'readonly'
       }
     },
     rules: {
