@@ -1,0 +1,9 @@
+.cc-feed { display: flex; flex-direction: column; gap: 1.5rem; max-width: 80ch; margin: 0 auto; padding: 1.5rem; }
+.cc-turn { border: 1px solid var(--cc-border, #d8d8d8); border-radius: 10px; overflow: hidden; }
+.cc-turn-head { display: flex; gap: .75rem; align-items: baseline; padding: .6rem .9rem; border-bottom: 1px solid var(--cc-border, #d8d8d8); }
+.cc-turn-n { font-variant-numeric: tabular-nums; opacity: .6; font-size: .85em; }
+.cc-turn-title { font-weight: 600; }
+.cc-turn-tpl { margin-left: auto; opacity: .55; font-size: .8em; text-transform: uppercase; letter-spacing: .04em; }
+.cc-turn-frag { padding: .9rem; }
+.cc-turn-trivial .cc-turn-frag { opacity: .55; font-style: italic; }
+@media (prefers-reduced-motion: no-preference) { .cc-turn { transition: opacity .15s ease; } }
