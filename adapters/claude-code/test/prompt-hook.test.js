@@ -8,36 +8,57 @@ const os = require('node:os');
 const path = require('node:path');
 
 const HOOK = path.join(__dirname, '..', 'bin', 'prompt-hook.js');
+const CLI = path.join(__dirname, '..', 'bin', 'cli.js');
+
+function freshCache() { return fs.mkdtempSync(path.join(os.tmpdir(), 'cc-ph-cache-')); }
+function freshCwd() { return fs.mkdtempSync(path.join(os.tmpdir(), 'cc-ph-cwd-')); }
 
 function runHook(cwd, env = {}) {
-  const out = execFileSync(process.execPath, [HOOK], {
+  return execFileSync(process.execPath, [HOOK], {
     input: JSON.stringify({ cwd }),
     env: { ...process.env, ...env },
     encoding: 'utf8'
   });
-  return out;
+}
+
+function hookLogPath(cacheRoot) {
+  return path.join(cacheRoot, 'cc-to-html', 'diag', 'hook.log');
+}
+
+function readPromptEvents(cacheRoot) {
+  const p = hookLogPath(cacheRoot);
+  if (!fs.existsSync(p)) return [];
+  return fs.readFileSync(p, 'utf8').split('\n').filter(Boolean)
+    .map((l) => { try { return JSON.parse(l); } catch { return null; } })
+    .filter((e) => e && e.kind === 'prompt');
 }
 
 test('prompt-hook injects no additionalContext when mode is off', () => {
-  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-ph-off-'));
-  const out = runHook(cwd);
+  const cwd = freshCwd();
+  const cache = freshCache();
+  const out = runHook(cwd, { XDG_CACHE_HOME: cache });
   assert.equal(out.trim(), '', 'mode off must emit nothing');
+  assert.equal(readPromptEvents(cache).length, 1, 'diag entry recorded');
 });
 
 test('prompt-hook injects no additionalContext when mode is on', () => {
-  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-ph-on-'));
-  process.env.XDG_CACHE_HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-ph-cache-'));
-  execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'cli.js'), 'toggle'], {
-    env: { ...process.env, CLAUDE_PROJECT_DIR: cwd }, encoding: 'utf8'
+  const cwd = freshCwd();
+  const cache = freshCache();
+  execFileSync(process.execPath, [CLI, 'toggle'], {
+    env: { ...process.env, XDG_CACHE_HOME: cache, CLAUDE_PROJECT_DIR: cwd },
+    encoding: 'utf8'
   });
-  const out = runHook(cwd, { CLAUDE_PROJECT_DIR: cwd });
+  const out = runHook(cwd, { XDG_CACHE_HOME: cache, CLAUDE_PROJECT_DIR: cwd });
   assert.ok(!out.includes('additionalContext'), 'must never emit additionalContext');
   assert.ok(!/TL;?DR/i.test(out), 'must not mention TL;DR');
   assert.ok(!/mermaid/i.test(out), 'must not mention mermaid');
+  assert.equal(out.trim(), '', 'mode on must emit nothing');
 });
 
 test('prompt-hook no-ops under the reentrancy sentinel', () => {
-  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'cc-ph-sentinel-'));
-  const out = runHook(cwd, { TO_HTML_ENRICHING: '1' });
+  const cwd = freshCwd();
+  const cache = freshCache();
+  const out = runHook(cwd, { XDG_CACHE_HOME: cache, TO_HTML_ENRICHING: '1' });
   assert.equal(out.trim(), '', 'sentinel must suppress all output');
+  assert.equal(readPromptEvents(cache).length, 0, 'sentinel guard must suppress diag entry');
 });

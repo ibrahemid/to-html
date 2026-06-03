@@ -6,6 +6,7 @@ const { readJsonStdin } = require('../lib/io');
 const { appendEvent } = require('../lib/diag');
 
 async function main() {
+  if (process.env.TO_HTML_ENRICHING === '1') process.exit(0);
   const payload = await readJsonStdin();
   const cwd = (payload && typeof payload.cwd === 'string') ? payload.cwd
     : (process.env.CLAUDE_PROJECT_DIR || process.cwd());
@@ -20,5 +21,3 @@ if (require.main === module) {
     process.exit(0);
   });
 }
-
-module.exports = {};
