@@ -26,3 +26,25 @@ test('render: trigger=manual passes through to core (skipped:false on short repl
   assert.strictEqual(result.skipped, false);
   assert.ok(result.path && fs.existsSync(result.path));
 });
+
+const fsR = require('node:fs');
+const { chunkPath: chunkPathR } = require('../lib/paths');
+
+test('render: writes a prose chunk at rev 1 when not enriched', async () => {
+  const r = await render({ markdown: '# Hi\n\n' + 'x '.repeat(300), sessionId: 'sess-chunk', turnIndex: 4 });
+  assert.equal(r.skipped, false);
+  const raw = fsR.readFileSync(chunkPathR('sess-chunk', 4), 'utf8');
+  assert.ok(raw.includes('"rev":1'));
+  assert.ok(raw.includes('"enriched":false'));
+});
+
+test('render: enrichment rewrites chunk at rev 2 enriched', async () => {
+  const r = await render({
+    markdown: '# Hi\n\n' + 'x '.repeat(300), sessionId: 'sess-chunk', turnIndex: 4,
+    enrichment: { tldr: 'Done.', graph: 'graph TD\n A-->B' }
+  });
+  assert.equal(r.skipped, false);
+  const raw = fsR.readFileSync(chunkPathR('sess-chunk', 4), 'utf8');
+  assert.ok(raw.includes('"rev":2'));
+  assert.ok(raw.includes('"enriched":true'));
+});
