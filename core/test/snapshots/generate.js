@@ -11,12 +11,17 @@ const FIXED_OPTS = Object.freeze({
   nowIso: '2026-05-28T00:00:00.000Z'
 });
 
-function renderFixture(markdown) {
+const FIXED_ENRICHMENT = Object.freeze({
+  'enriched': { tldr: 'A fixed deterministic summary for the snapshot.', graph: 'graph TD\n  A[Input] --> B[Process]\n  B --> C[Output]' }
+});
+
+function renderFixture(name, markdown) {
   const r = renderMarkdown(markdown, {
     trigger: 'manual',
     meta: FIXED_OPTS.meta,
     uiDefaults: FIXED_OPTS.uiDefaults,
-    nowIso: FIXED_OPTS.nowIso
+    nowIso: FIXED_OPTS.nowIso,
+    enrichment: FIXED_ENRICHMENT[name] || null
   });
   if (r.skipped) return { html: `<!--skip:${r.reason}-->`, template: r.template, skipped: true, reason: r.reason };
   return r;
@@ -38,7 +43,7 @@ function main() {
 
   const out = [];
   for (const [name, body] of listFixtures(fixturesDir)) {
-    const artifact = renderFixture(body);
+    const artifact = renderFixture(name.replace(/\.md$/, ''), body);
     const html = artifact.skipped ? `<!--skip:${artifact.reason}-->` : artifact.html;
     const target = path.join(goldenDir, name.replace(/\.md$/, '.html'));
     if (update || !fs.existsSync(target)) {
