@@ -194,3 +194,37 @@ test('Bug 2: a trivial turn advances the preview manifest version', () => {
   const manifest = JSON.parse(m[1]);
   assert.ok(manifest.version >= 1, 'trivial turn must advance the version');
 });
+
+const { chunkInputPath } = require('../lib/paths');
+const fsT13 = require('node:fs');
+
+test('stop-hook: enrich off -> no enricher spawn (no input.json written)', () => {
+  const cache = fsT13.mkdtempSync(path.join(os.tmpdir(), 'cc-enrich-off-'));
+  const cwd = fsT13.mkdtempSync(path.join(os.tmpdir(), 'cc-enrich-off-cwd-'));
+  const env = { ...process.env, XDG_CACHE_HOME: cache, CLAUDE_PROJECT_DIR: cwd };
+  execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'cli.js'), 'toggle'], { env, encoding: 'utf8' });
+  execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'cli.js'), 'config', 'enrich', 'off'], { env, encoding: 'utf8' });
+  const tx = path.join(cache, 'tx-en-off.jsonl');
+  const longBody = '# Topic\n\n' + 'word '.repeat(300);
+  fsT13.writeFileSync(tx, [
+    JSON.stringify({ type: 'user', message: { role: 'user', content: 'go' } }),
+    JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: longBody } })
+  ].join('\n'));
+  const sid = 'sess-enrich-off';
+  execFileSync(process.execPath, [path.join(__dirname, '..', 'bin', 'stop-hook.js')], {
+    input: JSON.stringify({ cwd, transcript_path: tx, session_id: sid }), env, encoding: 'utf8'
+  });
+  const prevXdg = process.env.XDG_CACHE_HOME;
+  process.env.XDG_CACHE_HOME = cache;
+  let turnsDir;
+  try {
+    turnsDir = path.dirname(chunkInputPath(sid, 0));
+  } finally {
+    if (prevXdg === undefined) delete process.env.XDG_CACHE_HOME;
+    else process.env.XDG_CACHE_HOME = prevXdg;
+  }
+  if (fsT13.existsSync(turnsDir)) {
+    const inputs = fsT13.readdirSync(turnsDir).filter((n) => n.endsWith('.input.json'));
+    assert.equal(inputs.length, 0, 'enrich off must not write an enricher input file');
+  }
+});

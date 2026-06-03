@@ -3,7 +3,8 @@
 
 const path = require('path');
 const { sessionArtifactsDir, safeSessionSegment } = require('../lib/paths');
-const { openInBrowser, clickableUrl } = require('../lib/open');
+const openLib = require('../lib/open');
+const { clickableUrl } = openLib;
 const { readJsonStdin, writeFileAtomic } = require('../lib/io');
 const { renderMarkdown } = require('../core/lib/index');
 const preview = require('../lib/preview');
@@ -72,7 +73,10 @@ async function render(input) {
 
   let openError = null;
   if (autoOpen) {
-    try { openInBrowser(fullPath); } catch (err) { openError = err.message; }
+    try {
+      const previewFile = preview.ensurePreviewHtml(sessionId, input.uiDefaults || null);
+      openLib.openInBrowser(previewFile);
+    } catch (err) { openError = err.message; }
   }
 
   return {

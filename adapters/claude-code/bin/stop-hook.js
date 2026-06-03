@@ -183,10 +183,10 @@ async function main() {
     if (result.skipped) {
       advanceTrivial(sessionId, turnIndex, state.uiDefaults);
     } else {
-      messages.push(`[to-html · ${result.template}] ${result.url}`);
       writeState(cwd, { lastRenderedTextHash: textHash });
 
-      preview.ensurePreviewHtml(sessionId, state.uiDefaults);
+      const previewFile = preview.ensurePreviewHtml(sessionId, state.uiDefaults);
+      messages.push(`[to-html · preview] file://${previewFile}`);
       // single-writer invariant: only this serialized Stop hook writes the manifest. The detached enricher (bin/enrich.js) writes only its turn's chunk and never the manifest, so manifest writes never collide.
       const upd = buildPreviewUpdate(state, { turnIndex, rendered: result });
       preview.updateManifest(sessionId, { turnIndex, pending: upd.pending });
