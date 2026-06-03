@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.2
+
+### Fixed
+- Live session preview stayed blank after upgrading from v2.0.3 because ensurePreviewHtml was idempotent: the stale shell file (with the old CSP that blocked external script loads) was never replaced on the next Stop hook. ensurePreviewHtml now reconciles the on-disk shell to the current bytes; identical contents are still a no-op (no churn).
+
 ## v2.1.1
 
 ### Fixed

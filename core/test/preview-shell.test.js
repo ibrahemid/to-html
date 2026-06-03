@@ -35,3 +35,17 @@ test('buildPreviewShell: omits unknown uiDefaults keys', () => {
   assert.ok(html.includes('data-theme="light"'));
   assert.ok(!html.includes('data-unknown'));
 });
+
+test('buildPreviewShell: CSP permits file: scheme script loads (regression for blank-preview bug)', () => {
+  // v2.1.0 shipped script-src 'unsafe-inline' which blocked the poller's dynamic
+  // <script src="preview-manifest.js?v=N"> injects on file://, leaving the preview blank.
+  // v2.1.1 added file: to script-src. Lock the contract here.
+  const html = buildPreviewShell({ uiDefaults: null, title: 'x' });
+  const m = html.match(/Content-Security-Policy[^>]+content="([^"]+)"/);
+  assert.ok(m, 'CSP meta must be present');
+  const csp = m[1];
+  const scriptSrc = csp.split(';').find((d) => d.trim().startsWith('script-src'));
+  assert.ok(scriptSrc, 'script-src directive must be defined');
+  assert.ok(/\bfile:/.test(scriptSrc), 'script-src must include file: so the poller can load chunks on file:// origins');
+  assert.ok(/'unsafe-inline'/.test(scriptSrc), "script-src must keep 'unsafe-inline' for the inlined poller");
+});

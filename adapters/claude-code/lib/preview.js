@@ -54,9 +54,17 @@ function updateManifest(sessionId, { turnIndex, pending, nowIso }) {
 }
 
 function ensurePreviewHtml(sessionId, uiDefaults) {
+  // Always reconcile to the current shell. The shell is content-addressed by its bytes;
+  // an old shell from a prior plugin version (e.g. with a stale CSP) gets silently
+  // upgraded on the next Stop hook. No-op when the on-disk bytes already match.
   const file = previewHtmlPath(sessionId);
-  if (fs.existsSync(file)) return file;
-  writeFileAtomic(file, buildPreviewShell({ uiDefaults: uiDefaults || null, title: 'to-html session preview' }));
+  const desired = buildPreviewShell({ uiDefaults: uiDefaults || null, title: 'to-html session preview' });
+  if (fs.existsSync(file)) {
+    try {
+      if (fs.readFileSync(file, 'utf8') === desired) return file;
+    } catch (_e) { /* fall through and rewrite */ }
+  }
+  writeFileAtomic(file, desired);
   return file;
 }
 

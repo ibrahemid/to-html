@@ -56,11 +56,24 @@ test('updateManifest: re-marking a turn updates pending without duplicating it',
   assert.equal(ones[0].pending, false);
 });
 
-test('ensurePreviewHtml: writes once, idempotent', () => {
+test('ensurePreviewHtml: writes once when missing, no churn on identical content', () => {
   const sid2 = 'sess-ensure';
   const p1 = preview.ensurePreviewHtml(sid2, { theme: 'dark' });
   const m1 = fs.statSync(p1).mtimeMs;
   const p2 = preview.ensurePreviewHtml(sid2, { theme: 'dark' });
   assert.equal(p1, p2);
-  assert.equal(fs.statSync(p2).mtimeMs, m1, 'must not rewrite if present');
+  assert.equal(fs.statSync(p2).mtimeMs, m1, 'must not rewrite when bytes match');
+});
+
+test('ensurePreviewHtml: rewrites a stale shell from a prior plugin version (CSP upgrade path)', () => {
+  // Regression for v2.1.2: a session preview.html written by v2.0.3/v2.1.0 carries the
+  // old restrictive CSP. The new ensurePreviewHtml must reconcile to the current shell on
+  // the next Stop hook so the user does not have to delete the file by hand.
+  const sid3 = 'sess-stale';
+  const p = preview.ensurePreviewHtml(sid3, { theme: 'dark' });
+  fs.writeFileSync(p, '<!doctype html><html><body>stale-from-old-version</body></html>');
+  preview.ensurePreviewHtml(sid3, { theme: 'dark' });
+  const after = fs.readFileSync(p, 'utf8');
+  assert.ok(after.includes('cc-feed'), 'must rewrite to current shell on byte mismatch');
+  assert.ok(!after.includes('stale-from-old-version'), 'old contents must be gone');
 });
