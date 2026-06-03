@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.1.1
+
+### Fixed
+- Live session preview was blank in Chrome because the embedded CSP allowed only inline scripts; the poller dynamically injects external script tags to load per-turn chunks, so all loads were blocked. The preview-shell CSP now permits same-scheme script loads (`script-src 'unsafe-inline' file:`). Stale frame-ancestors directive (no-op in <meta>) removed.
+- README, CLI bin, and CLI package description no longer reference internal phasing.
+
 ## v2.1.0
 
 ### Changed
