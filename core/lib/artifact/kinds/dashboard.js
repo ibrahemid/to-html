@@ -1,8 +1,11 @@
 'use strict';
 
-const { escapeHtml, escapeAttr } = require('../sanitize');
-const { renderMarkdown } = require('../markdown');
+const { ArtifactSpecError, reqString, optString, normalizeLinks, normalizeHeader } = require('../util');
+const { escapeHtml, escapeAttr } = require('../../sanitize');
+const { renderMarkdown } = require('../../markdown');
 
+const KIND = 'dashboard';
+const STATUSES = new Set(['done', 'in_progress', 'pending', 'blocked', 'decision']);
 const STATUS_LABELS = {
   done: 'Done',
   in_progress: 'In progress',
@@ -10,8 +13,39 @@ const STATUS_LABELS = {
   blocked: 'Blocked',
   decision: 'Needs you'
 };
-
 const ROLLUP_ORDER = ['decision', 'blocked', 'in_progress', 'pending', 'done'];
+
+function normalizeItem(item, ctx) {
+  if (!item || typeof item !== 'object') throw new ArtifactSpecError(`${ctx} must be an object`);
+  const out = { label: reqString(item.label, `${ctx}.label`) };
+  if (typeof item.status === 'string' && STATUSES.has(item.status)) out.status = item.status;
+  const detail = optString(item.detail);
+  if (detail) out.detail = detail;
+  if (typeof item.copyPrompt === 'string' && item.copyPrompt !== '') out.copyPrompt = item.copyPrompt;
+  const links = normalizeLinks(item.links);
+  if (links.length) out.links = links;
+  return out;
+}
+
+function normalizeSection(section, idx) {
+  const ctx = `sections[${idx}]`;
+  if (!section || typeof section !== 'object') throw new ArtifactSpecError(`${ctx} must be an object`);
+  const out = { title: reqString(section.title, `${ctx}.title`) };
+  const summary = optString(section.summary);
+  if (summary) out.summary = summary;
+  const items = Array.isArray(section.items) ? section.items : [];
+  out.items = items.map((it, i) => normalizeItem(it, `${ctx}.items[${i}]`));
+  return out;
+}
+
+function validate(spec) {
+  const out = { kind: KIND, ...normalizeHeader(spec) };
+  if (!Array.isArray(spec.sections) || spec.sections.length === 0) {
+    throw new ArtifactSpecError('dashboard.sections must be a non-empty array');
+  }
+  out.sections = spec.sections.map((s, i) => normalizeSection(s, i));
+  return out;
+}
 
 function renderBadge(status) {
   if (!status) return '';
@@ -82,4 +116,4 @@ function render(spec) {
   };
 }
 
-module.exports = { render, STATUS_LABELS };
+module.exports = { kind: KIND, validate, render, STATUS_LABELS };
