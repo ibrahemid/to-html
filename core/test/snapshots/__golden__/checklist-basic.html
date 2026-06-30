@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>Release checklist</title>
+<style>:root {
+  color-scheme: light dark;
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --accent: #6d28d9;
+  --accent-soft: rgba(109, 40, 217, 0.08);
+  --accent-line: rgba(109, 40, 217, 0.2);
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+  --serif: "Charter", "Iowan Old Style", "Source Serif Pro", "Georgia", "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "JetBrains Mono", "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+  --reading-family: var(--sans);
+  --reading-size: 18px;
+  --reading-leading: 1.62;
+  --reading-measure: 66ch;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"],
+:root[data-theme="sepia"] { color-scheme: dark; }
+
+:root[data-size="s"]  { --reading-size: 16px; }
+:root[data-size="m"]  { --reading-size: 18px; }
+:root[data-size="l"]  { --reading-size: 19.5px; }
+:root[data-size="xl"] { --reading-size: 21px; }
+
+:root[data-width="narrow"]      { --reading-measure: 56ch; }
+:root[data-width="comfortable"] { --reading-measure: 66ch; }
+:root[data-width="wide"]        { --reading-measure: 76ch; }
+
+:root[data-family="serif"] { --reading-family: var(--serif); }
+:root[data-family="sans"]  { --reading-family: var(--sans); }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e10;
+    --bg-elev: #17171a;
+    --bg-sunken: #0a0a0c;
+    --fg: #e8e8ee;
+    --fg-muted: #b3b3bb;
+    --fg-faint: #9e9ea6;
+    --accent: #c4b5fd;
+    --accent-soft: rgba(196, 181, 253, 0.10);
+    --accent-line: rgba(196, 181, 253, 0.28);
+    --border: #26262b;
+    --border-strong: #3a3a40;
+    --code-bg: #1a1a1f;
+    --code-fg: #e8e8ee;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0e10;
+  --bg-elev: #17171a;
+  --bg-sunken: #0a0a0c;
+  --fg: #e8e8ee;
+  --fg-muted: #b3b3bb;
+  --fg-faint: #9e9ea6;
+  --accent: #c4b5fd;
+  --accent-soft: rgba(196, 181, 253, 0.10);
+  --accent-line: rgba(196, 181, 253, 0.28);
+  --border: #26262b;
+  --border-strong: #3a3a40;
+  --code-bg: #1a1a1f;
+  --code-fg: #e8e8ee;
+}
+
+:root[data-theme="light"] {
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+}
+
+:root[data-theme="sepia"] {
+  --bg: #f4ecd8;
+  --bg-elev: #faf3e0;
+  --bg-sunken: #ede2c4;
+  --fg: #4a3a22;
+  --fg-muted: #6b573b;
+  --fg-faint: #6d5d40;
+  --accent: #934f1b;
+  --accent-soft: rgba(147, 79, 27, 0.08);
+  --accent-line: rgba(147, 79, 27, 0.22);
+  --border: #d9c8a3;
+  --border-strong: #c2ad7f;
+  --code-bg: #ebdfc2;
+  --code-fg: #4a3a22;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: var(--reading-size);
+  line-height: var(--reading-leading);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-line);
+  transition: border-color 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a { transition: none !important; }
+  .cc-section-flash { animation: none !important; }
+}
+a:hover { border-bottom-color: var(--accent); }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.875em;
+  background: var(--code-bg);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+pre code { background: transparent; padding: 0; font-size: inherit; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.2em 0;
+  font-size: 0.9375rem;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 2.4em 0;
+}
+
+blockquote {
+  margin: 1.2em 0;
+  padding: 4px 0 4px 20px;
+  border-left: 2px solid var(--accent-line);
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.cc-stamp {
+  position: fixed;
+  bottom: 14px;
+  left: 16px;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  color: var(--fg-faint);
+  letter-spacing: 0.04em;
+  z-index: 10;
+}
+
+.cc-tldr {
+  max-width: calc(var(--reading-measure) + 80px);
+  margin: 28px auto 0;
+  padding: 18px 22px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 18px;
+  align-items: start;
+}
+
+.cc-tldr-label {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-top: 4px;
+}
+
+.cc-tldr-body {
+  color: var(--fg);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.cc-tldr-body p { margin: 0 0 0.5em; }
+.cc-tldr-body p:last-child { margin-bottom: 0; }
+
+.cc-map {
+  max-width: calc(var(--reading-measure) + 80px);
+  margin: 20px auto 0;
+}
+
+.cc-map-toc {
+  padding: 12px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+}
+
+.cc-toc-rail .cc-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.cc-toc-item a {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--fg-muted);
+  border: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--bg-sunken);
+}
+
+.cc-toc-item a:hover {
+  color: var(--fg);
+  background: var(--accent-soft);
+}
+
+.cc-toc-l1 a { color: var(--fg); font-weight: 600; }
+.cc-toc-l3 a { font-size: 0.92em; }
+
+.tpl-checklist {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--reading-family);
+  font-size: var(--reading-size);
+  line-height: var(--reading-leading);
+}
+.cc-ck {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 96px;
+}
+.cc-ck-header { margin-bottom: 8px; }
+.cc-ck-h1 {
+  font-family: var(--sans);
+  font-size: 1.9rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.cc-ck-sub { color: var(--fg-muted); margin: 6px 0 0; font-size: 1.05rem; }
+.cc-ck-meta { color: var(--fg-faint); margin: 10px 0 0; font-size: 0.85rem; font-family: var(--mono); }
+.cc-ck-note { color: var(--fg-faint); margin: 12px 0 0; font-size: 0.78rem; }
+.cc-ck-group { margin-top: 32px; }
+.cc-ck-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.cc-ck-h {
+  font-family: var(--sans);
+  font-size: 1.15rem;
+  font-weight: 620;
+  margin: 0;
+}
+.cc-ck-count {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.cc-ck-group.is-complete .cc-ck-count { color: #1f7a4d; }
+.cc-ck-summary { color: var(--fg-muted); margin-bottom: 12px; font-size: 0.95rem; }
+.cc-ck-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cc-ck-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
+  align-items: start;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.cc-ck-item.is-checked { background: var(--bg-sunken); border-color: var(--border); }
+.cc-ck-box {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+  grid-row: 1;
+  grid-column: 1;
+}
+.cc-ck-text {
+  grid-row: 1;
+  grid-column: 2;
+  font-weight: 540;
+  cursor: pointer;
+}
+.cc-ck-item.is-checked .cc-ck-text { color: var(--fg-faint); text-decoration: line-through; }
+.cc-ck-detail {
+  grid-row: 2;
+  grid-column: 2;
+  color: var(--fg-muted);
+  font-size: 0.92rem;
+  margin-top: 4px;
+}
+.cc-ck-detail > :first-child { margin-top: 0; }
+.cc-ck-detail > :last-child { margin-bottom: 0; }
+.cc-ck-links { grid-row: 3; grid-column: 2; display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.cc-ck-link { color: var(--accent); font-size: 0.88rem; border-bottom: 1px solid var(--accent-line); }
+.cc-ck-link:hover { border-bottom-color: var(--accent); }
+@media (max-width: 540px) {
+  .cc-ck { padding: 28px 16px 64px; }
+  .cc-ck-h1 { font-size: 1.55rem; }
+}
+</style>
+</head>
+<body class="tpl-checklist">
+<div class="cc-stamp">to-html</div>
+
+
+<div class="cc-ck"><header class="cc-ck-header"><h1 class="cc-ck-h1">Release checklist</h1><p class="cc-ck-sub">run before tagging</p><p class="cc-ck-meta">to-html</p><p class="cc-ck-note">Checked state is saved in this browser only.</p></header><section class="cc-ck-group" data-ck-total="2"><div class="cc-ck-group-head"><h2 class="cc-ck-h">Quality gates</h2><span class="cc-ck-count" data-ck-count>0 / 2</span></div><div class="cc-ck-summary"><p>All must pass.</p>
+</div><ul class="cc-ck-items"><li class="cc-ck-item"><input type="checkbox" id="cc-ck-0-0" class="cc-ck-box"><label for="cc-ck-0-0" class="cc-ck-text">npm test</label><div class="cc-ck-detail"><p>Zero failures across workspaces.</p>
+</div></li><li class="cc-ck-item"><input type="checkbox" id="cc-ck-0-1" class="cc-ck-box"><label for="cc-ck-0-1" class="cc-ck-text">npm run lint</label><div class="cc-ck-detail"><p>Zero warnings.</p>
+</div><div class="cc-ck-links"><a class="cc-ck-link" href="https://example.com/lint" rel="noopener noreferrer">Rules</a></div></li></ul></section><section class="cc-ck-group" data-ck-total="2"><div class="cc-ck-group-head"><h2 class="cc-ck-h">Publish</h2><span class="cc-ck-count" data-ck-count>0 / 2</span></div><ul class="cc-ck-items"><li class="cc-ck-item"><input type="checkbox" id="cc-ck-1-0" class="cc-ck-box"><label for="cc-ck-1-0" class="cc-ck-text">Sync adapter copies</label></li><li class="cc-ck-item"><input type="checkbox" id="cc-ck-1-1" class="cc-ck-box"><label for="cc-ck-1-1" class="cc-ck-text">Tag and push</label></li></ul></section></div>
+
+
+
+<script>(function () {
+  'use strict';
+
+  var PREFIX = 'cc-checklist:' + (location.pathname || '') + ':';
+
+  function store(box) {
+    try {
+      if (box.checked) localStorage.setItem(PREFIX + box.id, '1');
+      else localStorage.removeItem(PREFIX + box.id);
+    } catch (_e) { /* localStorage may be unavailable from file:// */ }
+  }
+
+  function load(box) {
+    try { return localStorage.getItem(PREFIX + box.id) === '1'; } catch (_e) { return false; }
+  }
+
+  function updateGroup(group) {
+    var boxes = group.querySelectorAll('.cc-ck-box');
+    var done = 0;
+    for (var i = 0; i < boxes.length; i++) if (boxes[i].checked) done++;
+    var count = group.querySelector('[data-ck-count]');
+    if (count) count.textContent = done + ' / ' + boxes.length;
+    group.classList.toggle('is-complete', boxes.length > 0 && done === boxes.length);
+  }
+
+  function init() {
+    var boxes = document.querySelectorAll('.cc-ck-box');
+    for (var i = 0; i < boxes.length; i++) {
+      if (load(boxes[i])) boxes[i].checked = true;
+      var item = boxes[i].closest('.cc-ck-item');
+      if (item) item.classList.toggle('is-checked', boxes[i].checked);
+    }
+    var groups = document.querySelectorAll('.cc-ck-group');
+    for (var g = 0; g < groups.length; g++) updateGroup(groups[g]);
+  }
+
+  document.addEventListener('change', function (event) {
+    var box = event.target;
+    if (!box.classList || !box.classList.contains('cc-ck-box')) return;
+    store(box);
+    var item = box.closest('.cc-ck-item');
+    if (item) item.classList.toggle('is-checked', box.checked);
+    var group = box.closest('.cc-ck-group');
+    if (group) updateGroup(group);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
