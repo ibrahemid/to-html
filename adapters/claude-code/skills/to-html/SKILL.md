@@ -1,32 +1,28 @@
 ---
 name: to-html
-description: Toggle HTML rendering mode for the conversation. When on, substantive assistant replies render to a self-contained HTML artifact and the file path is printed inline. Use when the user types /to-html, /html, "turn on html mode", "render this as html", "open this in browser", or wants to read agent output visually. If the user types /to-html diag, /to-html debug, /to-html status, /to-html doctor, or asks "why isn't to-html working", run the diagnostic flow. If the user types /to-html config ..., run the config flow.
+description: Configure to-html artifact appearance (theme, size, width, font) and show status. Use when the user types /to-html or /to-html config .... to-html no longer auto-renders replies; to BUILD an artifact, the to-html-make skill handles requests like "build me html of X". This skill is config only.
 ---
 
-The user invoked `/to-html`. Inspect their exact text and pick a flow:
+The user invoked `/to-html`. to-html does not render replies automatically; it builds
+a self-contained HTML artifact on demand (see the `to-html-make` skill).
 
-- contains `diag`, `debug`, `doctor`, or `status` → **diagnostic flow**
-- starts with `config` (e.g. `/to-html config auto-open yes`) → **config flow**
-- otherwise → **toggle flow**
+- starts with `config` (e.g. `/to-html config theme dark`) → **config flow**
+- otherwise → **status flow**
 
-## Toggle flow
-
-Run one Bash call:
+## Status flow
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" toggle
+node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config show
 ```
 
-Print the `message` field from the JSON response as a single line. Nothing else.
-
-When mode is on, the Stop hook renders the most recent substantive reply (skipping its own toggle status and the auto-open question). A PostToolUse hook on `ExitPlanMode` renders plans as a live dashboard. Toggling off silences both hooks. Auto-open is off by default; the user can enable it with `/to-html config auto-open yes`.
+Print the `message` field as one line, then add: `To build an artifact, just ask (e.g. "build me html of X").`
 
 ## Config flow
 
-Pass the user's arguments through to the cli. Examples:
+These set the default appearance applied to every artifact. Pass the user's
+arguments through:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config auto-open yes
 node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config theme dark
 node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config size l
 node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config width comfortable
@@ -36,28 +32,9 @@ node "${CLAUDE_PLUGIN_ROOT}/bin/cli.js" config show
 
 Valid keys and values:
 
-- `auto-open` - `yes` | `no`
 - `theme` - `auto` | `light` | `dark` | `sepia`
 - `size` - `s` | `m` | `l` | `xl`
 - `width` - `narrow` | `comfortable` | `wide`
 - `font` - `sans` | `serif`
 
 Print the `message` field. If the cli returned `ok: false`, print the `error` field as the one line.
-
-## Diagnostic flow
-
-Run:
-
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/bin/diagnose.js"
-```
-
-Print the output verbatim.
-
-If `recent hook events` is `(none yet)`:
-
-> The Stop hook hasn't fired since this CC session started. Run `/reload-plugins`. If that doesn't help, restart Claude Code. After that, ask any question, then run `/to-html diag` again to confirm.
-
-If hook events exist but all show `mode=off`: HTML mode is OFF. Run `/to-html` to enable.
-
-If events show errors, surface the most recent error and stop.
