@@ -41,12 +41,12 @@ function defaultOutPath(spec, now) {
 
 // Assemble a spec into a single self-contained file, write it, and (by default)
 // open it. open is best-effort: a failed open never fails the artifact.
-function runArtifact({ spec, out, open = true, uiDefaults = null, openFn, now }) {
+function runArtifact({ spec, out, open = true, uiDefaults = null, openFn, now, opener = null }) {
   const result = assembleArtifact(spec, { uiDefaults });
   const outPath = out || defaultOutPath(spec, now);
   writeFileAtomic(outPath, result.html);
   if (open) {
-    try { (openFn || openInBrowser)(outPath); } catch (_e) { /* best-effort */ }
+    try { (openFn || openInBrowser)(outPath, { app: opener }); } catch (_e) { /* best-effort */ }
   }
   return {
     path: outPath,
@@ -77,7 +77,7 @@ async function main() {
   }
   const state = readState();
   try {
-    const r = runArtifact({ spec, out: opts.out, open: opts.open, uiDefaults: state.uiDefaults });
+    const r = runArtifact({ spec, out: opts.out, open: opts.open, uiDefaults: state.uiDefaults, opener: state.opener });
     appendEvent({ kind: 'artifact', cwd: state.cwd, artifactKind: r.kind, bytes: r.bytes });
     emit({ ok: true, ...r, message: `Artifact ready: ${r.url}` });
     process.exit(0);

@@ -10,18 +10,24 @@ class OpenError extends Error {
   }
 }
 
-function detectOpener() {
+function detectOpener(app) {
   const platform = process.platform;
-  if (platform === 'darwin') return { cmd: 'open', args: [] };
+  if (platform === 'darwin') {
+    return app ? { cmd: 'open', args: ['-a', app] } : { cmd: 'open', args: [] };
+  }
   if (platform === 'win32') return { cmd: 'cmd', args: ['/c', 'start', '""'] };
   return { cmd: 'xdg-open', args: [] };
 }
 
-function openInBrowser(absolutePath) {
+// opts.app names a specific application to open with (macOS `open -a <app>`,
+// e.g. "Dia"). Honored on darwin only; ignored elsewhere where the OS default
+// is used.
+function openInBrowser(absolutePath, opts = {}) {
   if (!absolutePath || !fs.existsSync(absolutePath)) {
     throw new OpenError(`Cannot open missing file: ${absolutePath}`);
   }
-  const { cmd, args } = detectOpener();
+  const app = (opts && typeof opts.app === 'string' && opts.app.trim() !== '') ? opts.app.trim() : null;
+  const { cmd, args } = detectOpener(app);
   const child = spawn(cmd, [...args, absolutePath], {
     detached: true,
     stdio: 'ignore'
@@ -61,4 +67,4 @@ function clickableUrl(absolutePath) {
   return pathToFileUrl(absolutePath);
 }
 
-module.exports = { OpenError, openInBrowser, clickableUrl, pathToFileUrl };
+module.exports = { OpenError, openInBrowser, clickableUrl, pathToFileUrl, detectOpener };

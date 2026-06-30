@@ -6,7 +6,7 @@ const { homeShortcut, resolveCacheRoot } = require('../lib/paths');
 
 const KNOWN_TOGGLE_ARGS = new Set(['on', 'off', 'status', 'reset', 'toggle']);
 const KNOWN_AUTO_OPEN_ARGS = new Set(['yes', 'no', 'true', 'false', 'on', 'off']);
-const CONFIG_KEYS = new Set(['auto-open', 'theme', 'size', 'width', 'font', 'show', 'enrich', 'enrich-model']);
+const CONFIG_KEYS = new Set(['auto-open', 'theme', 'size', 'width', 'font', 'show', 'enrich', 'enrich-model', 'opener']);
 
 function parseArg(value, allowed) {
   if (value === undefined || value === null) return null;
@@ -39,6 +39,7 @@ function snapshot(state, changed) {
     uiDefaults: state.uiDefaults,
     enrich: state.enrich,
     enrichModel: state.enrichModel,
+    opener: state.opener,
     cwd: state.cwd,
     stateFile: state.__file,
     changed,
@@ -104,6 +105,12 @@ function actionConfig(key, value) {
     const raw = String(value == null ? '' : value).trim();
     if (raw === '') fail('enrich-model requires a model id');
     return emit(snapshot(writeState(null, { enrichModel: raw }), true));
+  }
+
+  if (k === 'opener') {
+    const raw = String(value == null ? '' : value).trim();
+    const opener = (raw === '' || raw.toLowerCase() === 'default' || raw.toLowerCase() === 'none') ? null : raw;
+    return emit(snapshot(writeState(null, { opener }), true));
   }
 
   const uiKey = k === 'font' ? 'family' : k;

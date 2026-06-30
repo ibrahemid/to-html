@@ -13,7 +13,7 @@ class StateError extends Error {
   }
 }
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 
 const DEFAULT_ENRICH = 'on';
 const DEFAULT_ENRICH_MODEL = 'claude-haiku-4-5-20251001';
@@ -48,6 +48,7 @@ const DEFAULT_STATE = Object.freeze({
   renderThreshold: DEFAULT_RENDER_THRESHOLD,
   enrich: DEFAULT_ENRICH,
   enrichModel: DEFAULT_ENRICH_MODEL,
+  opener: null,
   cwd: null,
   activePlan: null,
   lastRenderedTextHash: null,
@@ -136,6 +137,9 @@ function migrate(parsed) {
       migrated.enrichModel = DEFAULT_ENRICH_MODEL;
     }
   }
+  if (incomingVersion < 6) {
+    if (typeof migrated.opener !== 'string' || migrated.opener.trim() === '') migrated.opener = null;
+  }
   return migrated;
 }
 
@@ -159,6 +163,12 @@ function coerceEnrichModel(value) {
   return trimmed === '' ? DEFAULT_ENRICH_MODEL : trimmed;
 }
 
+function coerceOpener(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
 function normalize(state) {
   return {
     ...state,
@@ -166,7 +176,8 @@ function normalize(state) {
     uiDefaults: mergeUiDefaults(state.uiDefaults),
     renderThreshold: mergeRenderThreshold(state.renderThreshold),
     enrich: coerceEnrich(state.enrich),
-    enrichModel: coerceEnrichModel(state.enrichModel)
+    enrichModel: coerceEnrichModel(state.enrichModel),
+    opener: coerceOpener(state.opener)
   };
 }
 

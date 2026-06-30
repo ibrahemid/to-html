@@ -134,7 +134,7 @@ test('schema migration: v4 state file gets enrich defaults on read (schemaVersio
   assert.equal(typeof s.enrichModel, 'string');
   assert.ok(s.enrichModel.length > 0);
   assert.equal(s.schemaVersion, SCHEMA_VERSION);
-  assert.equal(SCHEMA_VERSION, 5);
+  assert.equal(SCHEMA_VERSION, 6);
 });
 
 test('writeState round-trips enrich + enrichModel', () => {
