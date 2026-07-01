@@ -1,23 +1,22 @@
 {
   "name": "to-html",
-  "version": "2.1.3",
-  "description": "HTML rendering for Claude Code. `/to-html` toggles it on; substantive replies render as a self-contained artifact with a TL;DR, a concept map (mermaid to SVG with click-to-section, zoom, pan), a reading-order stepper, in-page search, and a settings gear (theme, size, width, font). Quiet by default: short or flat replies render nothing.",
+  "version": "3.0.0",
+  "description": "On-demand HTML artifacts for Claude Code. Ask for one (\"build me html of X\", \"status html\", \"options for Y\") and the model composes a structured spec that renders to a single self-contained file: dashboards, reports, option pickers, diagrams, checklists, asset grids, findings. Opens in your browser. No auto-render, no formatting imposed on your replies.",
   "author": {
     "name": "ibrahemid",
     "url": "https://github.com/ibrahemid"
   },
   "license": "MIT",
-  "repository": "https://github.com/ibrahemid/plugins",
-  "homepage": "https://github.com/ibrahemid/plugins/tree/main/plugins/to-html",
+  "repository": "https://github.com/ibrahemid/to-html",
+  "homepage": "https://github.com/ibrahemid/to-html/tree/main/adapters/claude-code",
   "keywords": [
     "html",
-    "output",
-    "rendering",
     "artifact",
-    "interactive",
-    "playground",
-    "plan-mode",
-    "planning",
-    "dashboard"
+    "dashboard",
+    "report",
+    "diagram",
+    "checklist",
+    "on-demand",
+    "visualization"
   ]
 }

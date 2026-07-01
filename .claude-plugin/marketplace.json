@@ -1,0 +1,20 @@
+{
+  "name": "ibrahemid",
+  "owner": {
+    "name": "ibrahemid",
+    "url": "https://github.com/ibrahemid"
+  },
+  "metadata": {
+    "description": "to-html: on-demand, self-contained HTML artifacts for Claude Code.",
+    "homepage": "https://github.com/ibrahemid/to-html"
+  },
+  "plugins": [
+    {
+      "name": "to-html",
+      "version": "3.0.0",
+      "description": "Ask for an HTML artifact and the model composes a structured spec that renders to one self-contained file: dashboards, reports, option pickers, diagrams, checklists, asset grids, findings. Opens in your browser. No auto-render.",
+      "keywords": ["html", "artifact", "dashboard", "report", "diagram", "checklist", "on-demand"],
+      "source": "./adapters/claude-code"
+    }
+  ]
+}
