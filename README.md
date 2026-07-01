@@ -1,7 +1,9 @@
 # to-html
 
-On-demand HTML artifacts for Claude Code. Ask for one and the model composes a
-structured spec that renders to a single self-contained file you open in your browser.
+Render agent output as self-contained HTML. Ask for an artifact in plain language;
+the model composes a structured spec and a deterministic core assembles one
+self-contained, sanitized, themed file and opens it. The core knows no host tool;
+the first adapter is a Claude Code plugin.
 
 ![to-html](docs/hero.png)
 
