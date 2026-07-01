@@ -454,6 +454,12 @@ blockquote {
   color: var(--fg-faint);
   letter-spacing: 0.04em;
   z-index: 10;
+  pointer-events: none;
+}
+
+/* The corner watermark would sit over content on a phone; drop it there. */
+@media (max-width: 600px) {
+  .cc-stamp { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
