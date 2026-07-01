@@ -54,7 +54,7 @@ function buildShell({
   const chromeScripts = hasChrome ? `<script>${readAsset('chrome-runtime.js')}</script>` : '';
   const bodyContent = skipMainWrapper ? body : `<main class="cc-main">\n${body}\n</main>`;
   return `<!doctype html>
-<html lang="en"${rootAttrs ? ' ' + rootAttrs : ''}>
+<html lang="en" dir="auto"${rootAttrs ? ' ' + rootAttrs : ''}>
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
@@ -62,7 +62,7 @@ function buildShell({
 ${refreshTag}
 ${headExtras}
 <title>${escapeHtml(title)}</title>
-<style>${readAsset('base.css')}${mapStyles}${chromeStyles}\n${styles}</style>
+<style>${readAsset('tokens.css')}\n${readAsset('base.css')}${mapStyles}${chromeStyles}\n${styles}</style>
 </head>
 <body class="${escapeHtml(classname)}">
 ${stampHtml}

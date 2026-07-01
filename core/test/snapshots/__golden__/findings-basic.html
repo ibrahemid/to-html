@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="auto">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
@@ -7,37 +7,128 @@
 
 
 <title>Security review</title>
-<style>:root {
+<style>/* to-html design system: the single source of truth for every artifact surface.
+   Layer 1 (this file): design tokens. Layer 2: base.css primitives. Layer 3: per-kind css.
+   Every value a kind or the shell consumes is a token defined here. No kind invents color. */
+
+:root {
   color-scheme: light dark;
+
+  /* Type: system-font stacks only (artifacts run under a CSP that forbids web fonts). */
+  --font-serif: "Charter", "Iowan Old Style", "Source Serif Pro", "Georgia", "Times New Roman", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+
+  /* Type scale: fixed steps for chrome/labels (body text follows --reading-size). ~1.2 ratio. */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-cap: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.62;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Tracking: the mono eyebrow/label voice. */
+  --tracking-label: 0.08em;
+  --tracking-wide: 0.14em;
+
+  /* Space: 4px grid. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+
+  /* Shape. */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+  --border-hair: 1px;
+  --border-strong-w: 2px;
+
+  /* Motion. */
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Elevation: borders and tint carry structure (print-safe, calm, theme-portable).
+     Shadows are a hover-only accent, suppressed for print and reduced-motion. */
+  --shadow-1: 0 1px 2px rgba(15, 15, 20, 0.05);
+  --shadow-2: 0 6px 24px -8px rgba(15, 15, 20, 0.18);
+
+  /* Reading controls (user-tunable via data-size / data-width / data-family). */
+  --reading-family: var(--font-sans);
+  --reading-size: 18px;
+  --reading-leading: var(--leading-relaxed);
+  --reading-measure: 66ch;
+
+  /* Content max-width for chrome (dashboards, reports, etc.). */
+  --content-measure: 880px;
+
+  /* Surface + text roles. Light is the default; themes override below. */
   --bg: #fbfaf6;
   --bg-elev: #ffffff;
   --bg-sunken: #f1f0eb;
   --fg: #15151a;
   --fg-muted: #555560;
   --fg-faint: #6f6f78;
-  --accent: #6d28d9;
-  --accent-soft: rgba(109, 40, 217, 0.08);
-  --accent-line: rgba(109, 40, 217, 0.2);
   --border: #e4e2dc;
   --border-strong: #d0cdc4;
   --code-bg: #f1efea;
   --code-fg: #15151a;
-  --serif: "Charter", "Iowan Old Style", "Source Serif Pro", "Georgia", "Times New Roman", serif;
-  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, "JetBrains Mono", "SF Mono", "Fira Code", Menlo, Consolas, monospace;
-  --reading-family: var(--sans);
-  --reading-size: 18px;
-  --reading-leading: 1.62;
-  --reading-measure: 66ch;
-  --radius-sm: 4px;
-  --radius: 8px;
-  --radius-lg: 14px;
+
+  /* Accent: one interactive hue (indigo-violet ink), the hue maximally separated from
+     the semantic tone lanes (red / amber / green) so status color never collides with
+     interaction color, and far enough off blue not to read as a default hyperlink. */
+  --accent: #4a37c8;
+  --accent-solid: #5646d8;
+  --accent-on: #ffffff;
+  --accent-soft: rgba(74, 55, 200, 0.08);
+  --accent-line: rgba(74, 55, 200, 0.26);
+
+  --focus-ring: var(--accent);
+
+  /* Semantic tones. Each: -fg (text/icon), -bg (tint fill), -bd (border). Theme-tuned. */
+  --tone-pos-fg: #1a7a4e;
+  --tone-pos-bg: rgba(26, 122, 78, 0.11);
+  --tone-pos-bd: rgba(26, 122, 78, 0.30);
+  --tone-neg-fg: #c0362c;
+  --tone-neg-bg: rgba(192, 54, 44, 0.11);
+  --tone-neg-bd: rgba(192, 54, 44, 0.30);
+  --tone-warn-fg: #96631a;
+  --tone-warn-bg: rgba(180, 120, 10, 0.14);
+  --tone-warn-bd: rgba(180, 120, 10, 0.32);
+  --tone-info-fg: #2f5bd0;
+  --tone-info-bg: rgba(47, 91, 208, 0.10);
+  --tone-info-bd: rgba(47, 91, 208, 0.28);
+  --tone-hot-fg: #c2410c;
+  --tone-hot-bg: rgba(194, 65, 12, 0.12);
+  --tone-hot-bd: rgba(194, 65, 12, 0.30);
+  --tone-muted-fg: var(--fg-faint);
+  --tone-muted-bg: var(--bg-sunken);
+  --tone-muted-bd: var(--border-strong);
 }
 
-:root[data-theme="light"] { color-scheme: light; }
-:root[data-theme="dark"],
-:root[data-theme="sepia"] { color-scheme: dark; }
-
+/* Reading controls. */
 :root[data-size="s"]  { --reading-size: 16px; }
 :root[data-size="m"]  { --reading-size: 18px; }
 :root[data-size="l"]  { --reading-size: 19.5px; }
@@ -47,9 +138,14 @@
 :root[data-width="comfortable"] { --reading-measure: 66ch; }
 :root[data-width="wide"]        { --reading-measure: 76ch; }
 
-:root[data-family="serif"] { --reading-family: var(--serif); }
-:root[data-family="sans"]  { --reading-family: var(--sans); }
+:root[data-family="serif"] { --reading-family: var(--font-serif); }
+:root[data-family="sans"]  { --reading-family: var(--font-sans); }
 
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="sepia"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+/* Dark tokens: applied by OS preference and by explicit data-theme="dark". */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0e0e10;
@@ -58,30 +154,36 @@
     --fg: #e8e8ee;
     --fg-muted: #b3b3bb;
     --fg-faint: #9e9ea6;
-    --accent: #c4b5fd;
-    --accent-soft: rgba(196, 181, 253, 0.10);
-    --accent-line: rgba(196, 181, 253, 0.28);
     --border: #26262b;
     --border-strong: #3a3a40;
     --code-bg: #1a1a1f;
     --code-fg: #e8e8ee;
-  }
-}
 
-:root[data-theme="dark"] {
-  --bg: #0e0e10;
-  --bg-elev: #17171a;
-  --bg-sunken: #0a0a0c;
-  --fg: #e8e8ee;
-  --fg-muted: #b3b3bb;
-  --fg-faint: #9e9ea6;
-  --accent: #c4b5fd;
-  --accent-soft: rgba(196, 181, 253, 0.10);
-  --accent-line: rgba(196, 181, 253, 0.28);
-  --border: #26262b;
-  --border-strong: #3a3a40;
-  --code-bg: #1a1a1f;
-  --code-fg: #e8e8ee;
+    --accent: #a99bff;
+    --accent-solid: #5648d6;
+    --accent-on: #ffffff;
+    --accent-soft: rgba(169, 155, 255, 0.12);
+    --accent-line: rgba(169, 155, 255, 0.30);
+
+    --tone-pos-fg: #4ecb8b;
+    --tone-pos-bg: rgba(78, 203, 139, 0.14);
+    --tone-pos-bd: rgba(78, 203, 139, 0.30);
+    --tone-neg-fg: #ff6b60;
+    --tone-neg-bg: rgba(255, 107, 96, 0.15);
+    --tone-neg-bd: rgba(255, 107, 96, 0.32);
+    --tone-warn-fg: #e0b24d;
+    --tone-warn-bg: rgba(224, 178, 77, 0.15);
+    --tone-warn-bd: rgba(224, 178, 77, 0.30);
+    --tone-info-fg: #8fa8ff;
+    --tone-info-bg: rgba(143, 168, 255, 0.15);
+    --tone-info-bd: rgba(143, 168, 255, 0.30);
+    --tone-hot-fg: #ff9d5c;
+    --tone-hot-bg: rgba(255, 157, 92, 0.15);
+    --tone-hot-bd: rgba(255, 157, 92, 0.30);
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 8px 28px -8px rgba(0, 0, 0, 0.6);
+  }
 }
 
 :root[data-theme="light"] {
@@ -95,6 +197,69 @@
   --border-strong: #d0cdc4;
   --code-bg: #f1efea;
   --code-fg: #15151a;
+
+  --accent: #4a37c8;
+  --accent-solid: #5646d8;
+  --accent-on: #ffffff;
+  --accent-soft: rgba(74, 55, 200, 0.08);
+  --accent-line: rgba(74, 55, 200, 0.26);
+
+  --tone-pos-fg: #1a7a4e;
+  --tone-pos-bg: rgba(26, 122, 78, 0.11);
+  --tone-pos-bd: rgba(26, 122, 78, 0.30);
+  --tone-neg-fg: #c0362c;
+  --tone-neg-bg: rgba(192, 54, 44, 0.11);
+  --tone-neg-bd: rgba(192, 54, 44, 0.30);
+  --tone-warn-fg: #96631a;
+  --tone-warn-bg: rgba(180, 120, 10, 0.14);
+  --tone-warn-bd: rgba(180, 120, 10, 0.32);
+  --tone-info-fg: #2f5bd0;
+  --tone-info-bg: rgba(47, 91, 208, 0.10);
+  --tone-info-bd: rgba(47, 91, 208, 0.28);
+  --tone-hot-fg: #c2410c;
+  --tone-hot-bg: rgba(194, 65, 12, 0.12);
+  --tone-hot-bd: rgba(194, 65, 12, 0.30);
+
+  --shadow-1: 0 1px 2px rgba(15, 15, 20, 0.05);
+  --shadow-2: 0 6px 24px -8px rgba(15, 15, 20, 0.18);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0e10;
+  --bg-elev: #17171a;
+  --bg-sunken: #0a0a0c;
+  --fg: #e8e8ee;
+  --fg-muted: #b3b3bb;
+  --fg-faint: #9e9ea6;
+  --border: #26262b;
+  --border-strong: #3a3a40;
+  --code-bg: #1a1a1f;
+  --code-fg: #e8e8ee;
+
+  --accent: #a99bff;
+  --accent-solid: #5648d6;
+  --accent-on: #ffffff;
+  --accent-soft: rgba(169, 155, 255, 0.12);
+  --accent-line: rgba(169, 155, 255, 0.30);
+
+  --tone-pos-fg: #4ecb8b;
+  --tone-pos-bg: rgba(78, 203, 139, 0.14);
+  --tone-pos-bd: rgba(78, 203, 139, 0.30);
+  --tone-neg-fg: #ff6b60;
+  --tone-neg-bg: rgba(255, 107, 96, 0.15);
+  --tone-neg-bd: rgba(255, 107, 96, 0.32);
+  --tone-warn-fg: #e0b24d;
+  --tone-warn-bg: rgba(224, 178, 77, 0.15);
+  --tone-warn-bd: rgba(224, 178, 77, 0.30);
+  --tone-info-fg: #8fa8ff;
+  --tone-info-bg: rgba(143, 168, 255, 0.15);
+  --tone-info-bd: rgba(143, 168, 255, 0.30);
+  --tone-hot-fg: #ff9d5c;
+  --tone-hot-bg: rgba(255, 157, 92, 0.15);
+  --tone-hot-bd: rgba(255, 157, 92, 0.30);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 28px -8px rgba(0, 0, 0, 0.6);
 }
 
 :root[data-theme="sepia"] {
@@ -103,15 +268,41 @@
   --bg-sunken: #ede2c4;
   --fg: #4a3a22;
   --fg-muted: #6b573b;
-  --fg-faint: #6d5d40;
-  --accent: #934f1b;
-  --accent-soft: rgba(147, 79, 27, 0.08);
-  --accent-line: rgba(147, 79, 27, 0.22);
+  --fg-faint: #86714f;
   --border: #d9c8a3;
   --border-strong: #c2ad7f;
   --code-bg: #ebdfc2;
   --code-fg: #4a3a22;
+
+  --accent: #4a3a86;
+  --accent-solid: #493c86;
+  --accent-on: #faf3e0;
+  --accent-soft: rgba(74, 58, 134, 0.09);
+  --accent-line: rgba(74, 58, 134, 0.26);
+
+  --tone-pos-fg: #3d6b1e;
+  --tone-pos-bg: rgba(61, 107, 30, 0.12);
+  --tone-pos-bd: rgba(61, 107, 30, 0.32);
+  --tone-neg-fg: #9e3b26;
+  --tone-neg-bg: rgba(158, 59, 38, 0.12);
+  --tone-neg-bd: rgba(158, 59, 38, 0.32);
+  --tone-warn-fg: #8a5a12;
+  --tone-warn-bg: rgba(138, 90, 18, 0.14);
+  --tone-warn-bd: rgba(138, 90, 18, 0.32);
+  --tone-info-fg: #33417f;
+  --tone-info-bg: rgba(51, 65, 127, 0.10);
+  --tone-info-bd: rgba(51, 65, 127, 0.26);
+  --tone-hot-fg: #a24a1a;
+  --tone-hot-bg: rgba(162, 74, 26, 0.12);
+  --tone-hot-bd: rgba(162, 74, 26, 0.30);
+
+  --shadow-1: 0 1px 2px rgba(74, 58, 34, 0.08);
+  --shadow-2: 0 6px 24px -8px rgba(74, 58, 34, 0.22);
 }
+
+/* to-html design system, layer 2: primitives. Resets, element styles, focus, print,
+   and the shared component vocabulary (eyebrow label, tone pill) that every kind
+   consumes. Reads only from tokens.css; defines no raw color or bare spacing value. */
 
 * { box-sizing: border-box; }
 
@@ -120,11 +311,12 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: var(--sans);
+  font-family: var(--font-sans);
   font-size: var(--reading-size);
   line-height: var(--reading-leading);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-feature-settings: "kern", "liga";
 }
 
 ::selection {
@@ -135,33 +327,35 @@ html, body {
 a {
   color: var(--accent);
   text-decoration: none;
-  border-bottom: 1px solid var(--accent-line);
-  transition: border-color 120ms ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  a { transition: none !important; }
-  .cc-section-flash { animation: none !important; }
+  border-bottom: var(--border-hair) solid var(--accent-line);
+  transition: border-color var(--dur-fast) var(--ease-standard);
 }
 a:hover { border-bottom-color: var(--accent); }
 
+:focus-visible {
+  outline: var(--border-strong-w) solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
 code {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 0.875em;
+  font-variant-ligatures: none;
   background: var(--code-bg);
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 pre {
   background: var(--code-bg);
   color: var(--code-fg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px 20px;
+  border: var(--border-hair) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4) var(--sp-5);
   overflow-x: auto;
   font-size: 0.875rem;
-  line-height: 1.6;
+  line-height: var(--leading-normal);
 }
 pre code { background: transparent; padding: 0; font-size: inherit; }
 
@@ -169,16 +363,16 @@ table {
   border-collapse: collapse;
   width: 100%;
   margin: 1.2em 0;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
 }
 th, td {
-  text-align: left;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
+  text-align: start;
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--border-hair) solid var(--border);
 }
 th {
-  font-weight: 600;
-  font-size: 0.75rem;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--fg-muted);
@@ -186,100 +380,93 @@ th {
 
 hr {
   border: none;
-  height: 1px;
+  height: var(--border-hair);
   background: var(--border);
   margin: 2.4em 0;
 }
 
 blockquote {
   margin: 1.2em 0;
-  padding: 4px 0 4px 20px;
-  border-left: 2px solid var(--accent-line);
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-5) 0;
+  border-inline-start: var(--border-strong-w) solid var(--accent-line);
   color: var(--fg-muted);
   font-style: italic;
 }
 
+/* The instrument voice: a mono, tracked, uppercase micro-label. Every kind stamps
+   its name with one, which is a load-bearing part of the shared identity. */
+.cc-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+/* Tone pill: one geometry, five semantic tones sourced from theme tokens. Dashboard
+   statuses and findings severities both render as pills, so a status never invents
+   a color and contrast is guaranteed by the token layer. */
+.cc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  border: var(--border-hair) solid transparent;
+  white-space: nowrap;
+}
+.cc-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  flex: none;
+}
+.cc-pill.is-plain::before { display: none; }
+
+.tone-pos    { color: var(--tone-pos-fg);  background: var(--tone-pos-bg);  border-color: var(--tone-pos-bd); }
+.tone-neg    { color: var(--tone-neg-fg);  background: var(--tone-neg-bg);  border-color: var(--tone-neg-bd); }
+.tone-warn   { color: var(--tone-warn-fg); background: var(--tone-warn-bg); border-color: var(--tone-warn-bd); }
+.tone-hot    { color: var(--tone-hot-fg);  background: var(--tone-hot-bg);  border-color: var(--tone-hot-bd); }
+.tone-info   { color: var(--tone-info-fg); background: var(--tone-info-bg); border-color: var(--tone-info-bd); }
+.tone-muted  { color: var(--tone-muted-fg); background: var(--tone-muted-bg); border-color: var(--tone-muted-bd); }
+.tone-accent { color: var(--accent);       background: var(--accent-soft);  border-color: var(--accent-line); }
+
+/* Diagram wrapper (the SVG map centers within this column). */
+.cc-map {
+  max-width: calc(var(--reading-measure) + 80px);
+  margin: var(--sp-5) auto 0;
+}
+
 .cc-stamp {
   position: fixed;
-  bottom: 14px;
-  left: 16px;
-  font-family: var(--mono);
-  font-size: 0.6875rem;
+  inset-block-end: var(--sp-3);
+  inset-inline-start: var(--sp-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
   color: var(--fg-faint);
   letter-spacing: 0.04em;
   z-index: 10;
 }
 
-.cc-tldr {
-  max-width: calc(var(--reading-measure) + 80px);
-  margin: 28px auto 0;
-  padding: 18px 22px;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: var(--radius);
-  background: var(--bg-elev);
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 18px;
-  align-items: start;
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 
-.cc-tldr-label {
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--accent);
-  padding-top: 4px;
+@media print {
+  html, body { background: #fff; color: #000; }
+  .cc-stamp { display: none; }
+  a { color: #000; }
+  * { box-shadow: none !important; }
+  @page { margin: 16mm; }
 }
-
-.cc-tldr-body {
-  color: var(--fg);
-  font-size: 1rem;
-  line-height: 1.55;
-}
-
-.cc-tldr-body p { margin: 0 0 0.5em; }
-.cc-tldr-body p:last-child { margin-bottom: 0; }
-
-.cc-map {
-  max-width: calc(var(--reading-measure) + 80px);
-  margin: 20px auto 0;
-}
-
-.cc-map-toc {
-  padding: 12px 18px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-elev);
-}
-
-.cc-toc-rail .cc-toc-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-}
-
-.cc-toc-item a {
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--fg-muted);
-  border: none;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: var(--bg-sunken);
-}
-
-.cc-toc-item a:hover {
-  color: var(--fg);
-  background: var(--accent-soft);
-}
-
-.cc-toc-l1 a { color: var(--fg); font-weight: 600; }
-.cc-toc-l3 a { font-size: 0.92em; }
 
 .tpl-findings {
   background: var(--bg);
@@ -291,89 +478,74 @@ blockquote {
 .cc-fd {
   max-width: 880px;
   margin: 0 auto;
-  padding: 48px 24px 96px;
+  padding: var(--sp-7) var(--sp-5) var(--sp-9);
 }
-.cc-fd-header { margin-bottom: 8px; }
+.cc-fd-header {
+  padding-bottom: var(--sp-5);
+  border-bottom: var(--border-hair) solid var(--border);
+  margin-bottom: var(--sp-6);
+}
+.cc-fd-kind { margin: 0 0 var(--sp-3); }
 .cc-fd-h1 {
-  font-family: var(--sans);
-  font-size: 1.9rem;
-  font-weight: 650;
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
   letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
   margin: 0;
 }
-.cc-fd-sub { color: var(--fg-muted); margin: 6px 0 0; font-size: 1.05rem; }
-.cc-fd-meta { color: var(--fg-faint); margin: 10px 0 0; font-size: 0.85rem; font-family: var(--mono); }
-.cc-fd-rollup { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-.cc-fd-roll {
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  color: var(--fg-muted);
-}
-.cc-fd-group { margin-top: 32px; }
+.cc-fd-sub { color: var(--fg-muted); margin: var(--sp-2) 0 0; font-size: var(--text-lg); }
+.cc-fd-meta { color: var(--fg-faint); margin: var(--sp-3) 0 0; font-size: var(--text-xs); font-family: var(--font-mono); }
+.cc-fd-rollup { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-4); }
+.cc-fd-roll { font-variant-numeric: tabular-nums; }
+.cc-fd-group { margin-top: var(--sp-6); }
+.cc-fd-group:first-of-type { margin-top: 0; }
 .cc-fd-h {
-  font-family: var(--sans);
-  font-size: 1.15rem;
-  font-weight: 620;
-  margin: 0 0 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--border-hair) solid var(--border);
 }
-.cc-fd-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.cc-fd-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-3); }
 .cc-fd-item {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
   background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: 14px 16px;
+  border: var(--border-hair) solid var(--border);
+  border-inline-start: var(--border-strong-w) solid var(--rail, var(--border-strong));
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-1);
 }
-.cc-fd-item[data-severity="critical"] { border-left-color: #b3261e; }
-.cc-fd-item[data-severity="high"] { border-left-color: #c2410c; }
-.cc-fd-item[data-severity="medium"] { border-left-color: #9a6a00; }
-.cc-fd-item[data-severity="low"] { border-left-color: #1f7a4d; }
-.cc-fd-item[data-severity="info"] { border-left-color: var(--accent); }
-.cc-fd-tags { flex: none; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
-.cc-fd-sev {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-.cc-fd-sev-critical { background: rgba(190, 40, 40, 0.14); color: #b3261e; }
-.cc-fd-sev-high { background: rgba(194, 65, 12, 0.14); color: #c2410c; }
-.cc-fd-sev-medium { background: rgba(180, 120, 10, 0.16); color: #9a6a00; }
-.cc-fd-sev-low { background: rgba(22, 128, 80, 0.13); color: #1f7a4d; }
-.cc-fd-sev-info { background: var(--accent-soft); color: var(--accent); }
+.cc-fd-item[data-severity="critical"] { --rail: var(--tone-neg-fg); }
+.cc-fd-item[data-severity="high"]     { --rail: var(--tone-hot-fg); }
+.cc-fd-item[data-severity="medium"]   { --rail: var(--tone-warn-fg); }
+.cc-fd-item[data-severity="low"]      { --rail: var(--tone-info-fg); }
+.cc-fd-item[data-severity="info"]     { --rail: var(--border-strong); }
+.cc-fd-body { min-width: 0; }
+.cc-fd-head { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.cc-fd-sev { flex: none; }
 .cc-fd-cat {
-  font-family: var(--mono);
-  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
   color: var(--fg-muted);
   background: var(--bg-sunken);
-  padding: 3px 7px;
-  border-radius: var(--radius-sm);
+  border: var(--border-hair) solid var(--border);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
   white-space: nowrap;
 }
-.cc-fd-body { flex: 1; min-width: 0; }
-.cc-fd-title { margin: 0; font-weight: 560; }
-.cc-fd-desc { color: var(--fg-muted); font-size: 0.95rem; margin-top: 4px; }
+.cc-fd-title { margin: 0; font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.cc-fd-desc { color: var(--fg-muted); font-size: var(--text-base); margin-top: var(--sp-2); overflow-wrap: anywhere; }
 .cc-fd-desc > :first-child { margin-top: 0; }
 .cc-fd-desc > :last-child { margin-bottom: 0; }
-.cc-fd-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
-.cc-fd-link { color: var(--accent); font-size: 0.9rem; border-bottom: 1px solid var(--accent-line); }
+.cc-fd-links { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-2); }
+.cc-fd-link { color: var(--accent); font-size: var(--text-base); border-bottom: var(--border-hair) solid var(--accent-line); }
 .cc-fd-link:hover { border-bottom-color: var(--accent); }
 @media (max-width: 540px) {
-  .cc-fd { padding: 28px 16px 64px; }
-  .cc-fd-h1 { font-size: 1.55rem; }
-  .cc-fd-item { flex-direction: column; gap: 10px; }
-  .cc-fd-tags { flex-direction: row; }
+  .cc-fd { padding: var(--sp-5) var(--sp-4) var(--sp-8); }
+  .cc-fd-h1 { font-size: var(--text-xl); }
 }
 </style>
 </head>
@@ -381,9 +553,9 @@ blockquote {
 <div class="cc-stamp">to-html</div>
 
 
-<div class="cc-fd"><header class="cc-fd-header"><h1 class="cc-fd-h1">Security review</h1><p class="cc-fd-sub">pre-release pass</p><p class="cc-fd-meta">to-html · 2026-07-01</p><div class="cc-fd-rollup"><span class="cc-fd-roll cc-fd-sev-critical">1 Critical</span><span class="cc-fd-roll cc-fd-sev-high">1 High</span><span class="cc-fd-roll cc-fd-sev-low">1 Low</span><span class="cc-fd-roll cc-fd-sev-info">1 Info</span></div></header><section class="cc-fd-group"><h2 class="cc-fd-h">Input handling</h2><ul class="cc-fd-items"><li class="cc-fd-item" data-severity="critical"><div class="cc-fd-tags"><span class="cc-fd-sev cc-fd-sev-critical">Critical</span><span class="cc-fd-cat">xss</span></div><div class="cc-fd-body"><p class="cc-fd-title">Reflected XSS in search</p><div class="cc-fd-desc"><p>Query echoed without escaping.</p>
-</div><div class="cc-fd-links"><a class="cc-fd-link" href="https://example.com/issue/1" rel="noopener noreferrer">Issue #1</a></div></div></li><li class="cc-fd-item" data-severity="high"><div class="cc-fd-tags"><span class="cc-fd-sev cc-fd-sev-high">High</span><span class="cc-fd-cat">csrf</span></div><div class="cc-fd-body"><p class="cc-fd-title">Missing CSRF token</p></div></li></ul></section><section class="cc-fd-group"><h2 class="cc-fd-h">Dependencies</h2><ul class="cc-fd-items"><li class="cc-fd-item" data-severity="low"><div class="cc-fd-tags"><span class="cc-fd-sev cc-fd-sev-low">Low</span><span class="cc-fd-cat">supply-chain</span></div><div class="cc-fd-body"><p class="cc-fd-title">Outdated marked</p><div class="cc-fd-desc"><p>Bump to latest.</p>
-</div></div></li><li class="cc-fd-item" data-severity="info"><div class="cc-fd-tags"><span class="cc-fd-sev cc-fd-sev-info">Info</span><span class="cc-fd-cat">hygiene</span></div><div class="cc-fd-body"><p class="cc-fd-title">Unused dev dep</p></div></li></ul></section></div>
+<div class="cc-fd"><header class="cc-fd-header"><h1 class="cc-fd-h1">Security review</h1><p class="cc-fd-sub">pre-release pass</p><p class="cc-fd-meta">to-html · 2026-07-01</p><div class="cc-fd-rollup"><span class="cc-fd-roll cc-pill tone-neg">1 Critical</span><span class="cc-fd-roll cc-pill tone-hot">1 High</span><span class="cc-fd-roll cc-pill tone-info">1 Low</span><span class="cc-fd-roll cc-pill tone-muted">1 Info</span></div></header><section class="cc-fd-group"><h2 class="cc-fd-h">Input handling</h2><ul class="cc-fd-items"><li class="cc-fd-item" data-severity="critical"><div class="cc-fd-body"><div class="cc-fd-head"><span class="cc-fd-sev cc-pill tone-neg cc-fd-sev-critical">Critical</span><span class="cc-fd-cat">xss</span><p class="cc-fd-title">Reflected XSS in search</p></div><div class="cc-fd-desc"><p>Query echoed without escaping.</p>
+</div><div class="cc-fd-links"><a class="cc-fd-link" href="https://example.com/issue/1" rel="noopener noreferrer">Issue #1</a></div></div></li><li class="cc-fd-item" data-severity="high"><div class="cc-fd-body"><div class="cc-fd-head"><span class="cc-fd-sev cc-pill tone-hot cc-fd-sev-high">High</span><span class="cc-fd-cat">csrf</span><p class="cc-fd-title">Missing CSRF token</p></div></div></li></ul></section><section class="cc-fd-group"><h2 class="cc-fd-h">Dependencies</h2><ul class="cc-fd-items"><li class="cc-fd-item" data-severity="low"><div class="cc-fd-body"><div class="cc-fd-head"><span class="cc-fd-sev cc-pill tone-info cc-fd-sev-low">Low</span><span class="cc-fd-cat">supply-chain</span><p class="cc-fd-title">Outdated marked</p></div><div class="cc-fd-desc"><p>Bump to latest.</p>
+</div></div></li><li class="cc-fd-item" data-severity="info"><div class="cc-fd-body"><div class="cc-fd-head"><span class="cc-fd-sev cc-pill tone-muted cc-fd-sev-info">Info</span><span class="cc-fd-cat">hygiene</span><p class="cc-fd-title">Unused dev dep</p></div></div></li></ul></section></div>
 
 
 

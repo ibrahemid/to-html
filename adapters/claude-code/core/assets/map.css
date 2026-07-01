@@ -72,7 +72,7 @@
 }
 
 .cc-map .node-label {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.02em;
   fill: var(--fg);
@@ -103,7 +103,7 @@
 }
 
 .cc-map .edge-label {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 10.5px;
   letter-spacing: 0.04em;
   fill: var(--fg-muted);
@@ -148,7 +148,7 @@
   color: var(--fg-muted);
   border-radius: 6px;
   cursor: pointer;
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 14px;
   line-height: 1;
   display: inline-flex;
@@ -168,7 +168,7 @@
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
-  font-family: var(--mono);
+  font-family: var(--font-mono);
 }
 
 .cc-map-stat {

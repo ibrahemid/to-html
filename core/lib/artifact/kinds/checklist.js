@@ -68,7 +68,7 @@ function renderHeader(spec) {
     }
   }
   const meta = metaBits.length ? `<p class="cc-ck-meta">${metaBits.join(' · ')}</p>` : '';
-  return `<header class="cc-ck-header"><h1 class="cc-ck-h1">${escapeHtml(spec.title)}</h1>${subtitle}${meta}<p class="cc-ck-note">Checked state is saved in this browser only.</p></header>`;
+  return `<header class="cc-ck-header"><p class="cc-eyebrow cc-ck-kind">Checklist</p><h1 class="cc-ck-h1">${escapeHtml(spec.title)}</h1>${subtitle}${meta}<p class="cc-ck-note">Checked state is saved in this browser only.</p></header>`;
 }
 
 function render(spec) {

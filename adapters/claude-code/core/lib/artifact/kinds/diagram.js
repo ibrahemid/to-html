@@ -56,7 +56,7 @@ function renderHeader(spec) {
     }
   }
   const meta = metaBits.length ? `<p class="cc-flow-meta-line">${metaBits.join(' · ')}</p>` : '';
-  return `<header class="cc-flow-header"><h1 class="cc-flow-h1">${escapeHtml(spec.title)}</h1>${subtitle}${meta}</header>`;
+  return `<header class="cc-flow-header"><p class="cc-eyebrow cc-flow-kind">Diagram</p><h1 class="cc-flow-h1">${escapeHtml(spec.title)}</h1>${subtitle}${meta}</header>`;
 }
 
 function renderStats(spec) {

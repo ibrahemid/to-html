@@ -14,6 +14,13 @@ const SEVERITY_LABELS = {
   info: 'Info'
 };
 const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low', 'info'];
+const SEVERITY_TONE = {
+  critical: 'tone-neg',
+  high: 'tone-hot',
+  medium: 'tone-warn',
+  low: 'tone-info',
+  info: 'tone-muted'
+};
 
 function normalizeFinding(finding, ctx) {
   if (!finding || typeof finding !== 'object') throw new ArtifactSpecError(`${ctx} must be an object`);
@@ -57,13 +64,14 @@ function validate(spec) {
 
 function renderSeverity(severity) {
   if (!severity) return '';
-  return `<span class="cc-fd-sev cc-fd-sev-${escapeAttr(severity)}">${escapeHtml(SEVERITY_LABELS[severity])}</span>`;
+  const tone = SEVERITY_TONE[severity] || 'tone-muted';
+  return `<span class="cc-fd-sev cc-pill ${tone} cc-fd-sev-${escapeAttr(severity)}">${escapeHtml(SEVERITY_LABELS[severity])}</span>`;
 }
 
-function renderTags(finding) {
+function renderHead(finding) {
   const sev = renderSeverity(finding.severity);
   const cat = finding.category ? `<span class="cc-fd-cat">${escapeHtml(finding.category)}</span>` : '';
-  return (sev || cat) ? `<div class="cc-fd-tags">${sev}${cat}</div>` : '';
+  return `<div class="cc-fd-head">${sev}${cat}<p class="cc-fd-title">${escapeHtml(finding.title)}</p></div>`;
 }
 
 function renderLinks(links) {
@@ -77,7 +85,7 @@ function renderLinks(links) {
 function renderFinding(finding) {
   const sevAttr = finding.severity ? ` data-severity="${escapeAttr(finding.severity)}"` : '';
   const description = finding.description ? `<div class="cc-fd-desc">${renderMarkdown(finding.description)}</div>` : '';
-  return `<li class="cc-fd-item"${sevAttr}>${renderTags(finding)}<div class="cc-fd-body"><p class="cc-fd-title">${escapeHtml(finding.title)}</p>${description}${renderLinks(finding.links)}</div></li>`;
+  return `<li class="cc-fd-item"${sevAttr}><div class="cc-fd-body">${renderHead(finding)}${description}${renderLinks(finding.links)}</div></li>`;
 }
 
 function renderGroup(group) {
@@ -95,7 +103,7 @@ function renderRollup(groups) {
   }
   const chips = SEVERITY_ORDER
     .filter((k) => counts[k])
-    .map((k) => `<span class="cc-fd-roll cc-fd-sev-${k}">${counts[k]} ${escapeHtml(SEVERITY_LABELS[k])}</span>`)
+    .map((k) => `<span class="cc-fd-roll cc-pill ${SEVERITY_TONE[k] || 'tone-muted'}">${counts[k]} ${escapeHtml(SEVERITY_LABELS[k])}</span>`)
     .join('');
   return chips ? `<div class="cc-fd-rollup">${chips}</div>` : '';
 }

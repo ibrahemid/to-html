@@ -84,7 +84,7 @@ function renderHeader(spec) {
     }
   }
   const meta = metaBits.length ? `<p class="cc-opt-meta">${metaBits.join(' · ')}</p>` : '';
-  return `<header class="cc-opt-header"><h1 class="cc-opt-h1">${escapeHtml(spec.title)}</h1>${subtitle}${meta}</header>`;
+  return `<header class="cc-opt-header"><p class="cc-eyebrow cc-opt-kind">Options</p><h1 class="cc-opt-h1">${escapeHtml(spec.title)}</h1>${subtitle}${meta}</header>`;
 }
 
 function render(spec) {
