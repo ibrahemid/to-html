@@ -27,7 +27,9 @@ The job is specific and it constrains the design more than a general UI would:
 ## Decision
 
 One token-driven design system, sourced from `core/assets/tokens.css`, consumed by
-every kind, the assembly shell, and the site. The identity is editorial-technical:
+every kind and the assembly shell. The site (a separate Astro build outside the core)
+mirrors the same token values and identity rather than importing the core file. The
+identity is editorial-technical:
 a grayscale-dominant surface, one accent hue rationed for interaction, semantic status
 color as theme-aware tokens, a mono "instrument" voice for micro-labels, and structure
 carried by hairlines and tint rather than drop shadows.
