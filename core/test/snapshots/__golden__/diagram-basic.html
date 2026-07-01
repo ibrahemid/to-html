@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>Render pipeline</title>
+<style>:root {
+  color-scheme: light dark;
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --accent: #6d28d9;
+  --accent-soft: rgba(109, 40, 217, 0.08);
+  --accent-line: rgba(109, 40, 217, 0.2);
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+  --serif: "Charter", "Iowan Old Style", "Source Serif Pro", "Georgia", "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "JetBrains Mono", "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+  --reading-family: var(--sans);
+  --reading-size: 18px;
+  --reading-leading: 1.62;
+  --reading-measure: 66ch;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 14px;
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"],
+:root[data-theme="sepia"] { color-scheme: dark; }
+
+:root[data-size="s"]  { --reading-size: 16px; }
+:root[data-size="m"]  { --reading-size: 18px; }
+:root[data-size="l"]  { --reading-size: 19.5px; }
+:root[data-size="xl"] { --reading-size: 21px; }
+
+:root[data-width="narrow"]      { --reading-measure: 56ch; }
+:root[data-width="comfortable"] { --reading-measure: 66ch; }
+:root[data-width="wide"]        { --reading-measure: 76ch; }
+
+:root[data-family="serif"] { --reading-family: var(--serif); }
+:root[data-family="sans"]  { --reading-family: var(--sans); }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e10;
+    --bg-elev: #17171a;
+    --bg-sunken: #0a0a0c;
+    --fg: #e8e8ee;
+    --fg-muted: #b3b3bb;
+    --fg-faint: #9e9ea6;
+    --accent: #c4b5fd;
+    --accent-soft: rgba(196, 181, 253, 0.10);
+    --accent-line: rgba(196, 181, 253, 0.28);
+    --border: #26262b;
+    --border-strong: #3a3a40;
+    --code-bg: #1a1a1f;
+    --code-fg: #e8e8ee;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0e10;
+  --bg-elev: #17171a;
+  --bg-sunken: #0a0a0c;
+  --fg: #e8e8ee;
+  --fg-muted: #b3b3bb;
+  --fg-faint: #9e9ea6;
+  --accent: #c4b5fd;
+  --accent-soft: rgba(196, 181, 253, 0.10);
+  --accent-line: rgba(196, 181, 253, 0.28);
+  --border: #26262b;
+  --border-strong: #3a3a40;
+  --code-bg: #1a1a1f;
+  --code-fg: #e8e8ee;
+}
+
+:root[data-theme="light"] {
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+}
+
+:root[data-theme="sepia"] {
+  --bg: #f4ecd8;
+  --bg-elev: #faf3e0;
+  --bg-sunken: #ede2c4;
+  --fg: #4a3a22;
+  --fg-muted: #6b573b;
+  --fg-faint: #6d5d40;
+  --accent: #934f1b;
+  --accent-soft: rgba(147, 79, 27, 0.08);
+  --accent-line: rgba(147, 79, 27, 0.22);
+  --border: #d9c8a3;
+  --border-strong: #c2ad7f;
+  --code-bg: #ebdfc2;
+  --code-fg: #4a3a22;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: var(--reading-size);
+  line-height: var(--reading-leading);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-line);
+  transition: border-color 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a { transition: none !important; }
+  .cc-section-flash { animation: none !important; }
+}
+a:hover { border-bottom-color: var(--accent); }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.875em;
+  background: var(--code-bg);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+pre code { background: transparent; padding: 0; font-size: inherit; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.2em 0;
+  font-size: 0.9375rem;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 2.4em 0;
+}
+
+blockquote {
+  margin: 1.2em 0;
+  padding: 4px 0 4px 20px;
+  border-left: 2px solid var(--accent-line);
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+.cc-stamp {
+  position: fixed;
+  bottom: 14px;
+  left: 16px;
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  color: var(--fg-faint);
+  letter-spacing: 0.04em;
+  z-index: 10;
+}
+
+.cc-tldr {
+  max-width: calc(var(--reading-measure) + 80px);
+  margin: 28px auto 0;
+  padding: 18px 22px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 18px;
+  align-items: start;
+}
+
+.cc-tldr-label {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-top: 4px;
+}
+
+.cc-tldr-body {
+  color: var(--fg);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.cc-tldr-body p { margin: 0 0 0.5em; }
+.cc-tldr-body p:last-child { margin-bottom: 0; }
+
+.cc-map {
+  max-width: calc(var(--reading-measure) + 80px);
+  margin: 20px auto 0;
+}
+
+.cc-map-toc {
+  padding: 12px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+}
+
+.cc-toc-rail .cc-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.cc-toc-item a {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--fg-muted);
+  border: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--bg-sunken);
+}
+
+.cc-toc-item a:hover {
+  color: var(--fg);
+  background: var(--accent-soft);
+}
+
+.cc-toc-l1 a { color: var(--fg); font-weight: 600; }
+.cc-toc-l3 a { font-size: 0.92em; }
+
+.cc-map-graph {
+  max-width: calc(var(--reading-measure) + 320px);
+  margin: 24px auto 0;
+}
+
+.cc-map-figure {
+  margin: 0;
+  position: relative;
+}
+
+.cc-map-canvas {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  overflow: hidden;
+  position: relative;
+  touch-action: none;
+  cursor: grab;
+}
+
+.cc-map-canvas.is-dragging { cursor: grabbing; }
+
+.cc-map-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.5;
+  border-radius: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .cc-map-canvas::before {
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 1px);
+  }
+}
+
+:root[data-theme="dark"] .cc-map-canvas::before {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 1px);
+}
+
+.cc-map .diagram-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 320px;
+  max-height: 720px;
+  position: relative;
+  z-index: 1;
+}
+
+.cc-map .node {
+  cursor: pointer;
+  transition: opacity 200ms ease, transform 220ms cubic-bezier(.2,.7,.2,1);
+  outline: 2px solid transparent;
+}
+
+.cc-map .node:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cc-map .node-shape {
+  fill: var(--bg);
+  stroke: var(--fg-muted);
+  stroke-width: 1.5;
+  transition: fill 220ms ease, stroke 220ms ease, filter 220ms ease;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,0.04));
+}
+
+.cc-map .node-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  fill: var(--fg);
+  pointer-events: none;
+  user-select: none;
+}
+
+.cc-map .node-linked .node-shape {
+  stroke: var(--accent-line);
+}
+
+.cc-map .node:hover .node-shape,
+.cc-map .node:focus .node-shape {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.cc-map .edge-line {
+  stroke: var(--fg-faint);
+  stroke-width: 1.5;
+  fill: none;
+  transition: stroke 220ms ease, stroke-width 220ms ease, opacity 220ms ease;
+}
+
+.cc-map .arrow-head {
+  fill: var(--fg-faint);
+  transition: fill 220ms ease;
+}
+
+.cc-map .edge-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  fill: var(--fg-muted);
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke;
+  stroke: var(--bg-elev);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+.cc-map .diagram-svg.has-focus .node:not(.is-active) .node-shape { fill: var(--bg-elev); opacity: 0.4; }
+.cc-map .diagram-svg.has-focus .node:not(.is-active) .node-label { opacity: 0.4; }
+.cc-map .diagram-svg.has-focus .edge:not(.is-active) .edge-line { opacity: 0.18; }
+.cc-map .diagram-svg.has-focus .edge:not(.is-active) .edge-label { opacity: 0.18; }
+
+.cc-map .node.is-active .node-shape {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.cc-map .node.is-active .node-label { fill: var(--fg); font-weight: 700; }
+
+.cc-map .edge.is-active .edge-line { stroke: var(--accent); stroke-width: 2; }
+.cc-map .edge.is-active .arrow-head { fill: var(--accent); }
+.cc-map .edge.is-active .edge-label { fill: var(--accent); }
+
+.cc-map-controls {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+
+.cc-map-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cc-map-btn:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+.cc-map-meta {
+  margin: 12px 4px 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+}
+
+.cc-map-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.cc-map-stat .num {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.cc-map-stat .lbl {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+}
+
+.cc-map-hint {
+  font-size: 0.74rem;
+  color: var(--fg-faint);
+}
+
+.cc-detail-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: min(440px, calc(100vw - 48px));
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 20px 22px 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+  z-index: 20;
+}
+
+.cc-detail-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--fg-muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.cc-detail-close:hover {
+  background: var(--bg-sunken);
+  color: var(--fg);
+}
+
+.cc-detail-body h1, .cc-detail-body h2, .cc-detail-body h3 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--fg);
+}
+
+.cc-detail-body p {
+  margin: 0 0 0.6em;
+  color: var(--fg-muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.cc-detail-body p:last-child { margin-bottom: 0; }
+
+.cc-section-flash {
+  animation: cc-flash 1.2s ease-out;
+}
+
+@keyframes cc-flash {
+  0%   { background: var(--accent-soft); }
+  100% { background: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-map .node,
+  .cc-map .node-shape,
+  .cc-map .edge-line,
+  .cc-map .arrow-head {
+    transition: none !important;
+    animation: none !important;
+  }
+  .cc-section-flash { animation: none !important; }
+}
+
+.tpl-flow {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--reading-family);
+}
+.cc-flow {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 48px 24px 96px;
+}
+.cc-flow-header { margin-bottom: 8px; max-width: 720px; }
+.cc-flow-h1 {
+  font-family: var(--sans);
+  font-size: 1.9rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.cc-flow-sub { color: var(--fg-muted); margin: 6px 0 0; font-size: 1.05rem; }
+.cc-flow-meta-line { color: var(--fg-faint); margin: 10px 0 0; font-size: 0.85rem; font-family: var(--mono); }
+.tpl-flow .cc-map { margin-top: 24px; max-width: none; }
+.cc-flow-figure { margin: 0; }
+.cc-flow-canvas {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  overflow: hidden;
+}
+@media (max-width: 540px) {
+  .cc-flow { padding: 28px 16px 64px; }
+  .cc-flow-h1 { font-size: 1.55rem; }
+  .cc-flow-canvas { padding: 14px; }
+}
+</style>
+</head>
+<body class="tpl-flow">
+<div class="cc-stamp">to-html</div>
+
+
+<div class="cc-flow"><header class="cc-flow-header"><h1 class="cc-flow-h1">Render pipeline</h1><p class="cc-flow-sub">spec to opened file</p><p class="cc-flow-meta-line">to-html</p></header><div class="cc-map"><figure class="cc-flow-figure"><div class="cc-flow-canvas"><svg viewBox="0 0 1038 216" preserveAspectRatio="xMidYMid meet" class="diagram-svg" aria-label="Concept map">
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 1 1 L 11 6 L 1 11 z" class="arrow-head" />
+    </marker>
+  </defs>
+  <g class="edges"><g class="edge" aria-hidden="true" data-edge-id="e0" data-from="spec" data-to="validate">
+      <path d="M 190 108 C 230 108, 230 108, 270 108" class="edge-line" marker-end="url(#arrow)" fill="none" />
+      <text x="230" y="104" class="edge-label" text-anchor="middle">author</text>
+    </g>
+<g class="edge" aria-hidden="true" data-edge-id="e1" data-from="validate" data-to="render">
+      <path d="M 380 108 C 420 108, 420 108, 460 108" class="edge-line" marker-end="url(#arrow)" fill="none" />
+      <text x="439" y="104" class="edge-label" text-anchor="middle">normalize</text>
+    </g>
+<g class="edge" aria-hidden="true" data-edge-id="e2" data-from="render" data-to="shell">
+      <path d="M 570 108 C 610 108, 610 108, 650 108" class="edge-line" marker-end="url(#arrow)" fill="none" />
+      <text x="592.6" y="104" class="edge-label" text-anchor="middle">assets</text>
+    </g>
+<g class="edge" aria-hidden="true" data-edge-id="e3" data-from="shell" data-to="open">
+      <path d="M 768 108 C 808 108, 808 108, 848 108" class="edge-line" marker-end="url(#arrow)" fill="none" />
+      
+    </g></g>
+  <g class="nodes"><g class="node" data-node-id="spec" tabindex="0" role="button" aria-label="Spec">
+      <rect x="80" y="80" width="110" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="135" y="113" class="node-label" text-anchor="middle">Spec</text>
+    </g>
+<g class="node" data-node-id="validate" tabindex="0" role="button" aria-label="Validate">
+      <rect x="270" y="80" width="110" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="325" y="113" class="node-label" text-anchor="middle">Validate</text>
+    </g>
+<g class="node" data-node-id="render" tabindex="0" role="button" aria-label="Render">
+      <rect x="460" y="80" width="110" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="515" y="113" class="node-label" text-anchor="middle">Render</text>
+    </g>
+<g class="node" data-node-id="shell" tabindex="0" role="button" aria-label="Build shell">
+      <rect x="650" y="80" width="118" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="709" y="113" class="node-label" text-anchor="middle">Build shell</text>
+    </g>
+<g class="node" data-node-id="open" tabindex="0" role="button" aria-label="Open file">
+      <rect x="848" y="80" width="110" height="56" rx="10" ry="10" class="node-shape" />
+      <text x="903" y="113" class="node-label" text-anchor="middle">Open file</text>
+    </g></g>
+</svg></div></figure><dl class="cc-map-meta">
+    <div class="cc-map-stat"><dd class="num">5</dd><dt class="lbl">nodes</dt></div>
+    <div class="cc-map-stat"><dd class="num">4</dd><dt class="lbl">edges</dt></div>
+  </dl></div></div>
+
+
+
+
+</body>
+</html>

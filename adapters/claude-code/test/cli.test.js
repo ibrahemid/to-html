@@ -260,3 +260,14 @@ test('config enrich-model rejects empty', () => {
   const out = runExpectFail(['config', 'enrich-model', ''], tmp);
   assert.equal(out.ok, false);
 });
+
+test('cli config opener: sets a named app and clears with default', () => {
+  const tmp = makeTmp();
+  const set = run(['config', 'opener', 'Dia'], tmp);
+  assert.equal(set.ok, true);
+  assert.equal(set.opener, 'Dia');
+  const shown = run(['config', 'show'], tmp);
+  assert.equal(shown.opener, 'Dia');
+  const cleared = run(['config', 'opener', 'default'], tmp);
+  assert.equal(cleared.opener, null);
+});
