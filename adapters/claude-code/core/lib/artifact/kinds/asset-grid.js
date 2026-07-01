@@ -71,7 +71,7 @@ function renderHeader(spec) {
     }
   }
   const meta = metaBits.length ? `<p class="cc-ag-meta">${metaBits.join(' · ')}</p>` : '';
-  return `<header class="cc-ag-header"><h1 class="cc-ag-h1">${escapeHtml(spec.title)}</h1>${subtitle}${meta}</header>`;
+  return `<header class="cc-ag-header"><p class="cc-eyebrow cc-ag-kind">Assets</p><h1 class="cc-ag-h1">${escapeHtml(spec.title)}</h1>${subtitle}${meta}</header>`;
 }
 
 function render(spec) {

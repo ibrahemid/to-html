@@ -6,29 +6,35 @@
 .cc-flow {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 48px 24px 96px;
+  padding: var(--sp-7) var(--sp-5) var(--sp-9);
 }
-.cc-flow-header { margin-bottom: 8px; max-width: 720px; }
+.cc-flow-header {
+  margin-bottom: var(--sp-5);
+  padding-bottom: var(--sp-5);
+  border-bottom: var(--border-hair) solid var(--border);
+}
+.cc-flow-kind { margin: 0 0 var(--sp-3); }
 .cc-flow-h1 {
-  font-family: var(--sans);
-  font-size: 1.9rem;
-  font-weight: 650;
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
   letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
   margin: 0;
 }
-.cc-flow-sub { color: var(--fg-muted); margin: 6px 0 0; font-size: 1.05rem; }
-.cc-flow-meta-line { color: var(--fg-faint); margin: 10px 0 0; font-size: 0.85rem; font-family: var(--mono); }
-.tpl-flow .cc-map { margin-top: 24px; max-width: none; }
+.cc-flow-sub { color: var(--fg-muted); margin: var(--sp-2) 0 0; font-size: var(--text-lg); }
+.cc-flow-meta-line { color: var(--fg-faint); margin: var(--sp-3) 0 0; font-size: var(--text-xs); font-family: var(--font-mono); }
+.tpl-flow .cc-map { margin-top: var(--sp-5); max-width: none; }
 .cc-flow-figure { margin: 0; }
 .cc-flow-canvas {
   background: var(--bg-elev);
-  border: 1px solid var(--border);
+  border: var(--border-hair) solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: var(--sp-5);
   overflow: hidden;
 }
 @media (max-width: 540px) {
-  .cc-flow { padding: 28px 16px 64px; }
-  .cc-flow-h1 { font-size: 1.55rem; }
-  .cc-flow-canvas { padding: 14px; }
+  .cc-flow { padding: var(--sp-5) var(--sp-4) var(--sp-8); }
+  .cc-flow-h1 { font-size: var(--text-xl); }
+  .cc-flow-canvas { padding: var(--sp-3); }
 }

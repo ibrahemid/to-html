@@ -1,0 +1,292 @@
+/* to-html design system: the single source of truth for every artifact surface.
+   Layer 1 (this file): design tokens. Layer 2: base.css primitives. Layer 3: per-kind css.
+   Every value a kind or the shell consumes is a token defined here. No kind invents color. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Type: system-font stacks only (artifacts run under a CSP that forbids web fonts). */
+  --font-serif: "Charter", "Iowan Old Style", "Source Serif Pro", "Georgia", "Times New Roman", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+
+  /* Type scale: fixed steps for chrome/labels (body text follows --reading-size). ~1.2 ratio. */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-cap: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.62;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Tracking: the mono eyebrow/label voice. */
+  --tracking-label: 0.08em;
+  --tracking-wide: 0.14em;
+
+  /* Space: 4px grid. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+
+  /* Shape. */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+  --border-hair: 1px;
+  --border-strong-w: 2px;
+
+  /* Motion. */
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Elevation: borders and tint carry structure (print-safe, calm, theme-portable).
+     Shadows are a hover-only accent, suppressed for print and reduced-motion. */
+  --shadow-1: 0 1px 2px rgba(15, 15, 20, 0.05);
+  --shadow-2: 0 6px 24px -8px rgba(15, 15, 20, 0.18);
+
+  /* Reading controls (user-tunable via data-size / data-width / data-family). */
+  --reading-family: var(--font-sans);
+  --reading-size: 18px;
+  --reading-leading: var(--leading-relaxed);
+  --reading-measure: 66ch;
+
+  /* Content max-width for chrome (dashboards, reports, etc.). */
+  --content-measure: 880px;
+
+  /* Surface + text roles. Light is the default; themes override below. */
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+
+  /* Accent: one interactive hue (indigo-violet ink), the hue maximally separated from
+     the semantic tone lanes (red / amber / green) so status color never collides with
+     interaction color, and far enough off blue not to read as a default hyperlink. */
+  --accent: #4a37c8;
+  --accent-solid: #5646d8;
+  --accent-on: #ffffff;
+  --accent-soft: rgba(74, 55, 200, 0.08);
+  --accent-line: rgba(74, 55, 200, 0.26);
+
+  --focus-ring: var(--accent);
+
+  /* Semantic tones. Each: -fg (text/icon), -bg (tint fill), -bd (border). Theme-tuned. */
+  --tone-pos-fg: #1a7a4e;
+  --tone-pos-bg: rgba(26, 122, 78, 0.11);
+  --tone-pos-bd: rgba(26, 122, 78, 0.30);
+  --tone-neg-fg: #c0362c;
+  --tone-neg-bg: rgba(192, 54, 44, 0.11);
+  --tone-neg-bd: rgba(192, 54, 44, 0.30);
+  --tone-warn-fg: #96631a;
+  --tone-warn-bg: rgba(180, 120, 10, 0.14);
+  --tone-warn-bd: rgba(180, 120, 10, 0.32);
+  --tone-info-fg: #2f5bd0;
+  --tone-info-bg: rgba(47, 91, 208, 0.10);
+  --tone-info-bd: rgba(47, 91, 208, 0.28);
+  --tone-hot-fg: #c2410c;
+  --tone-hot-bg: rgba(194, 65, 12, 0.12);
+  --tone-hot-bd: rgba(194, 65, 12, 0.30);
+  --tone-muted-fg: var(--fg-faint);
+  --tone-muted-bg: var(--bg-sunken);
+  --tone-muted-bd: var(--border-strong);
+}
+
+/* Reading controls. */
+:root[data-size="s"]  { --reading-size: 16px; }
+:root[data-size="m"]  { --reading-size: 18px; }
+:root[data-size="l"]  { --reading-size: 19.5px; }
+:root[data-size="xl"] { --reading-size: 21px; }
+
+:root[data-width="narrow"]      { --reading-measure: 56ch; }
+:root[data-width="comfortable"] { --reading-measure: 66ch; }
+:root[data-width="wide"]        { --reading-measure: 76ch; }
+
+:root[data-family="serif"] { --reading-family: var(--font-serif); }
+:root[data-family="sans"]  { --reading-family: var(--font-sans); }
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="sepia"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+/* Dark tokens: applied by OS preference and by explicit data-theme="dark". */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e10;
+    --bg-elev: #17171a;
+    --bg-sunken: #0a0a0c;
+    --fg: #e8e8ee;
+    --fg-muted: #b3b3bb;
+    --fg-faint: #9e9ea6;
+    --border: #26262b;
+    --border-strong: #3a3a40;
+    --code-bg: #1a1a1f;
+    --code-fg: #e8e8ee;
+
+    --accent: #a99bff;
+    --accent-solid: #5648d6;
+    --accent-on: #ffffff;
+    --accent-soft: rgba(169, 155, 255, 0.12);
+    --accent-line: rgba(169, 155, 255, 0.30);
+
+    --tone-pos-fg: #4ecb8b;
+    --tone-pos-bg: rgba(78, 203, 139, 0.14);
+    --tone-pos-bd: rgba(78, 203, 139, 0.30);
+    --tone-neg-fg: #ff6b60;
+    --tone-neg-bg: rgba(255, 107, 96, 0.15);
+    --tone-neg-bd: rgba(255, 107, 96, 0.32);
+    --tone-warn-fg: #e0b24d;
+    --tone-warn-bg: rgba(224, 178, 77, 0.15);
+    --tone-warn-bd: rgba(224, 178, 77, 0.30);
+    --tone-info-fg: #8fa8ff;
+    --tone-info-bg: rgba(143, 168, 255, 0.15);
+    --tone-info-bd: rgba(143, 168, 255, 0.30);
+    --tone-hot-fg: #ff9d5c;
+    --tone-hot-bg: rgba(255, 157, 92, 0.15);
+    --tone-hot-bd: rgba(255, 157, 92, 0.30);
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 8px 28px -8px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+
+  --accent: #4a37c8;
+  --accent-solid: #5646d8;
+  --accent-on: #ffffff;
+  --accent-soft: rgba(74, 55, 200, 0.08);
+  --accent-line: rgba(74, 55, 200, 0.26);
+
+  --tone-pos-fg: #1a7a4e;
+  --tone-pos-bg: rgba(26, 122, 78, 0.11);
+  --tone-pos-bd: rgba(26, 122, 78, 0.30);
+  --tone-neg-fg: #c0362c;
+  --tone-neg-bg: rgba(192, 54, 44, 0.11);
+  --tone-neg-bd: rgba(192, 54, 44, 0.30);
+  --tone-warn-fg: #96631a;
+  --tone-warn-bg: rgba(180, 120, 10, 0.14);
+  --tone-warn-bd: rgba(180, 120, 10, 0.32);
+  --tone-info-fg: #2f5bd0;
+  --tone-info-bg: rgba(47, 91, 208, 0.10);
+  --tone-info-bd: rgba(47, 91, 208, 0.28);
+  --tone-hot-fg: #c2410c;
+  --tone-hot-bg: rgba(194, 65, 12, 0.12);
+  --tone-hot-bd: rgba(194, 65, 12, 0.30);
+
+  --shadow-1: 0 1px 2px rgba(15, 15, 20, 0.05);
+  --shadow-2: 0 6px 24px -8px rgba(15, 15, 20, 0.18);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0e10;
+  --bg-elev: #17171a;
+  --bg-sunken: #0a0a0c;
+  --fg: #e8e8ee;
+  --fg-muted: #b3b3bb;
+  --fg-faint: #9e9ea6;
+  --border: #26262b;
+  --border-strong: #3a3a40;
+  --code-bg: #1a1a1f;
+  --code-fg: #e8e8ee;
+
+  --accent: #a99bff;
+  --accent-solid: #5648d6;
+  --accent-on: #ffffff;
+  --accent-soft: rgba(169, 155, 255, 0.12);
+  --accent-line: rgba(169, 155, 255, 0.30);
+
+  --tone-pos-fg: #4ecb8b;
+  --tone-pos-bg: rgba(78, 203, 139, 0.14);
+  --tone-pos-bd: rgba(78, 203, 139, 0.30);
+  --tone-neg-fg: #ff6b60;
+  --tone-neg-bg: rgba(255, 107, 96, 0.15);
+  --tone-neg-bd: rgba(255, 107, 96, 0.32);
+  --tone-warn-fg: #e0b24d;
+  --tone-warn-bg: rgba(224, 178, 77, 0.15);
+  --tone-warn-bd: rgba(224, 178, 77, 0.30);
+  --tone-info-fg: #8fa8ff;
+  --tone-info-bg: rgba(143, 168, 255, 0.15);
+  --tone-info-bd: rgba(143, 168, 255, 0.30);
+  --tone-hot-fg: #ff9d5c;
+  --tone-hot-bg: rgba(255, 157, 92, 0.15);
+  --tone-hot-bd: rgba(255, 157, 92, 0.30);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 28px -8px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme="sepia"] {
+  --bg: #f4ecd8;
+  --bg-elev: #faf3e0;
+  --bg-sunken: #ede2c4;
+  --fg: #4a3a22;
+  --fg-muted: #6b573b;
+  --fg-faint: #86714f;
+  --border: #d9c8a3;
+  --border-strong: #c2ad7f;
+  --code-bg: #ebdfc2;
+  --code-fg: #4a3a22;
+
+  --accent: #4a3a86;
+  --accent-solid: #493c86;
+  --accent-on: #faf3e0;
+  --accent-soft: rgba(74, 58, 134, 0.09);
+  --accent-line: rgba(74, 58, 134, 0.26);
+
+  --tone-pos-fg: #3d6b1e;
+  --tone-pos-bg: rgba(61, 107, 30, 0.12);
+  --tone-pos-bd: rgba(61, 107, 30, 0.32);
+  --tone-neg-fg: #9e3b26;
+  --tone-neg-bg: rgba(158, 59, 38, 0.12);
+  --tone-neg-bd: rgba(158, 59, 38, 0.32);
+  --tone-warn-fg: #8a5a12;
+  --tone-warn-bg: rgba(138, 90, 18, 0.14);
+  --tone-warn-bd: rgba(138, 90, 18, 0.32);
+  --tone-info-fg: #33417f;
+  --tone-info-bg: rgba(51, 65, 127, 0.10);
+  --tone-info-bd: rgba(51, 65, 127, 0.26);
+  --tone-hot-fg: #a24a1a;
+  --tone-hot-bg: rgba(162, 74, 26, 0.12);
+  --tone-hot-bd: rgba(162, 74, 26, 0.30);
+
+  --shadow-1: 0 1px 2px rgba(74, 58, 34, 0.08);
+  --shadow-2: 0 6px 24px -8px rgba(74, 58, 34, 0.22);
+}

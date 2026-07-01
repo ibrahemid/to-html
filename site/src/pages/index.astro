@@ -1,0 +1,318 @@
+---
+import Base from '../layouts/Base.astro';
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '') || '';
+const shots = `${baseUrl}/screenshots`;
+const examples = `${baseUrl}/examples/to-html`;
+
+const kinds = [
+  { id: 'dashboard', name: 'dashboard', tag: 'status and handoff',
+    body: 'Sections of items, each with a status, a detail note, links, and a copy-able prompt. The header counts the statuses.' },
+  { id: 'report', name: 'report', tag: 'tables and links',
+    body: 'Sections carrying a data table and a list of links. A plain flag drops the styling to a bare table you can paste elsewhere.' },
+  { id: 'options', name: 'options', tag: 'compare and pick',
+    body: 'Two to four cards side by side, each with pros and cons or bullets. One can be marked recommended.' },
+  { id: 'diagram', name: 'diagram', tag: 'nodes and edges',
+    body: 'A system or flow graph drawn from nodes and edges as inline SVG. No runtime; the graph ships inside the file.' },
+  { id: 'checklist', name: 'checklist', tag: 'checkable items',
+    body: 'Groups of items you can check off. Checked state is saved in the browser of whoever opens the file, and the file says so.' },
+  { id: 'asset-grid', name: 'asset-grid', tag: 'files to hand off',
+    body: 'Cards for a set of files, each with an optional preview image and download links.' },
+  { id: 'findings', name: 'findings', tag: 'severity-ranked audit',
+    body: 'An audit or inventory list. Each finding carries a severity from critical to info, a category, and a description. The header counts the severities.' }
+];
+
+const steps = [
+  { n: '1', k: 'Ask', t: 'You ask for an artifact in the conversation: build me an html of this, show me the options, make a checklist.' },
+  { n: '2', k: 'Spec', t: 'The model picks the kind that fits and fills its typed spec from the task. It authors the spec, never the HTML.' },
+  { n: '3', k: 'Assemble', t: 'The core validates the spec and builds one self-contained file: inline CSS and SVG, image data URIs, sanitized.' },
+  { n: '4', k: 'Open', t: 'It writes the file and opens it in your browser. The same spec always produces the same file.' }
+];
+---
+<Base title="to-html" description="Render agent output as self-contained HTML artifacts: dashboard, report, options, diagram, checklist, asset-grid, findings.">
+
+  <section class="hero">
+    <p class="kicker">agent output &rarr; html</p>
+    <h1 class="head">Render agent output<br>as&nbsp;HTML.</h1>
+    <p class="dek">
+      A reply in a terminal flattens structure: tables linearize, options become bullets, a diagram is not a diagram. Ask
+      for an artifact in plain language and a deterministic core assembles one self-contained, sanitized, themed file and
+      opens it. Seven kinds for the shapes a reply takes.
+    </p>
+
+    <div class="install">
+      <div class="install-row">
+        <span class="prompt" aria-hidden="true">$</span>
+        <span class="cmd">/plugin marketplace add ibrahemid/to-html</span>
+        <button type="button" class="copy" data-clip="/plugin marketplace add ibrahemid/to-html" aria-label="Copy marketplace command">copy</button>
+      </div>
+      <div class="install-row">
+        <span class="prompt" aria-hidden="true">$</span>
+        <span class="cmd">/plugin install to-html@ibrahemid</span>
+        <button type="button" class="copy" data-clip="/plugin install to-html@ibrahemid" aria-label="Copy install command">copy</button>
+      </div>
+    </div>
+    <p class="install-note">The first adapter is a Claude Code plugin. The core knows no host tool; more adapters follow.</p>
+  </section>
+
+  <a class="hero-shot" href={`${examples}/dashboard.html`} target="_blank" rel="noopener" aria-label="Open a live artifact">
+    <img src={`${shots}/hero.png`} alt="Redesigned to-html artifacts: a dashboard, an options picker, and a findings list under one design system" loading="eager" width="2400" height="1350">
+    <span class="hero-shot-overlay">open a live one &rarr;</span>
+  </a>
+
+  <div class="section-label"><span>seven kinds</span></div>
+
+  <section class="kinds">
+    {kinds.map((t) => (
+      <article id={t.id} class="kind">
+        <div class="kind-head">
+          <h2 class="kind-name">{t.name}</h2>
+          <span class="kind-tag">{t.tag}</span>
+        </div>
+        <p class="kind-body">{t.body}</p>
+        <p class="kind-cta"><a href={`${examples}/${t.id}.html`} target="_blank" rel="noopener">open live &rarr;</a></p>
+      </article>
+    ))}
+  </section>
+
+  <div class="section-label"><span>how it works</span></div>
+
+  <section class="steps">
+    {steps.map((s) => (
+      <div class="step">
+        <span class="step-n">{s.n}</span>
+        <div class="step-body">
+          <h3 class="step-k">{s.k}</h3>
+          <p class="step-t">{s.t}</p>
+        </div>
+      </div>
+    ))}
+  </section>
+
+  <section class="appendix">
+    <p>
+      Plain-text fields are escaped and markdown is sanitized; unsafe links and images are dropped. An invalid spec is
+      rejected with the field that failed, so the model can fix it and re-run. The core is Node with zero runtime
+      dependencies, and it renders offline and from a file.
+    </p>
+    <p class="appendix-lead">Set durable defaults:</p>
+<pre>{`/to-html config theme   dark | light | sepia | auto
+/to-html config size    s | m | l | xl
+/to-html config width   narrow | comfortable | wide
+/to-html config font    sans | serif
+/to-html config opener  Dia`}</pre>
+    <p><code>opener</code> names the browser the file opens in.</p>
+  </section>
+
+  <script>
+    document.querySelectorAll('.copy').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const text = btn.getAttribute('data-clip');
+        if (!text) return;
+        const restore = btn.textContent;
+        const done = () => {
+          btn.textContent = 'copied';
+          setTimeout(() => { btn.textContent = restore; }, 1200);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, () => fallback(text, done));
+        } else fallback(text, done);
+      });
+    });
+    function fallback(text, done) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      document.body.removeChild(ta);
+      done();
+    }
+  </script>
+</Base>
+
+<style>
+  .hero { margin: 0 0 40px; }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  .head {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(2.5rem, 6.5vw, 4.75rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    margin: 0 0 24px;
+    color: var(--ink);
+  }
+  .dek {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--ink-muted);
+    max-width: 640px;
+    margin: 0 0 32px;
+  }
+
+  .install { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+  .install-row {
+    display: inline-flex;
+    align-items: center;
+    background: var(--terminal-bg);
+    color: var(--terminal-fg);
+    border: 1px solid var(--rule-strong);
+    border-radius: 6px;
+    padding: 4px 4px 4px 14px;
+    font-family: var(--mono);
+    font-size: 0.8125rem;
+    line-height: 1;
+  }
+  .install-row .prompt { color: var(--terminal-prompt); font-weight: 600; margin-right: 10px; }
+  .install-row .cmd { padding: 8px 14px 8px 0; }
+  .install-row .copy {
+    background: var(--terminal-fg);
+    color: var(--terminal-bg);
+    border: 0;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 120ms ease;
+  }
+  .install-row .copy:hover { opacity: 0.85; }
+  .install-row .copy:active { transform: translateY(1px); }
+  .install-note {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--ink-faint);
+    margin: 16px 0 0;
+    letter-spacing: 0.01em;
+  }
+
+  .hero-shot {
+    display: block;
+    margin: 0 0 8px;
+    border: 1px solid var(--rule);
+    background: var(--paper-tint);
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    transition: border-color 200ms ease;
+  }
+  .hero-shot:hover { border-color: var(--accent); }
+  .hero-shot img { display: block; width: 100%; height: auto; }
+  .hero-shot-overlay {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    background: var(--accent);
+    color: #fff;
+    padding: 6px 12px;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    border-radius: 4px;
+    transform: translateY(4px);
+    opacity: 0;
+    transition: transform 200ms ease, opacity 200ms ease;
+  }
+  .hero-shot:hover .hero-shot-overlay { transform: translateY(0); opacity: 1; }
+
+  .kinds {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .kind {
+    background: var(--paper);
+    padding: 24px 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .kind:last-child { grid-column: 1 / -1; }
+  .kind-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .kind-name {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--ink);
+  }
+  .kind-tag {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-line);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .kind-body {
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--ink-muted);
+    margin: 0;
+    flex: 1;
+  }
+  .kind-cta { margin: 4px 0 0; font-family: var(--mono); font-size: 0.76rem; }
+  .kind-cta a { color: var(--accent); border-bottom-color: var(--accent-line); }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px 48px;
+    max-width: 900px;
+  }
+  .step { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; }
+  .step-n {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    padding-top: 2px;
+  }
+  .step-k {
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 640;
+    margin: 0 0 4px;
+    color: var(--ink);
+  }
+  .step-t { font-size: 0.9375rem; line-height: 1.55; color: var(--ink-muted); margin: 0; }
+
+  .appendix { max-width: 660px; margin-top: 64px; }
+  .appendix p {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--ink);
+    margin: 0 0 14px;
+    max-width: 60ch;
+  }
+  .appendix-lead { margin-top: 24px; }
+  .appendix code { font-size: 0.84em; }
+  .appendix pre { display: block; margin: 12px 0 16px; max-width: 100%; }
+
+  @media (max-width: 720px) {
+    .kinds, .steps { grid-template-columns: 1fr; }
+    .head { font-size: 2.2rem; }
+    .install-row { flex-wrap: wrap; }
+  }
+</style>
+</Base>

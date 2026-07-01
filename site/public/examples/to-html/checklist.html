@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en" dir="auto">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<title>Ship checklist</title>
+<style>/* to-html design system: the single source of truth for every artifact surface.
+   Layer 1 (this file): design tokens. Layer 2: base.css primitives. Layer 3: per-kind css.
+   Every value a kind or the shell consumes is a token defined here. No kind invents color. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Type: system-font stacks only (artifacts run under a CSP that forbids web fonts). */
+  --font-serif: "Charter", "Iowan Old Style", "Source Serif Pro", "Georgia", "Times New Roman", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", "Fira Code", Menlo, Consolas, monospace;
+
+  /* Type scale: fixed steps for chrome/labels (body text follows --reading-size). ~1.2 ratio. */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-cap: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.62;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Tracking: the mono eyebrow/label voice. */
+  --tracking-label: 0.08em;
+  --tracking-wide: 0.14em;
+
+  /* Space: 4px grid. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+
+  /* Shape. */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+  --border-hair: 1px;
+  --border-strong-w: 2px;
+
+  /* Motion. */
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Elevation: borders and tint carry structure (print-safe, calm, theme-portable).
+     Shadows are a hover-only accent, suppressed for print and reduced-motion. */
+  --shadow-1: 0 1px 2px rgba(15, 15, 20, 0.05);
+  --shadow-2: 0 6px 24px -8px rgba(15, 15, 20, 0.18);
+
+  /* Reading controls (user-tunable via data-size / data-width / data-family). */
+  --reading-family: var(--font-sans);
+  --reading-size: 18px;
+  --reading-leading: var(--leading-relaxed);
+  --reading-measure: 66ch;
+
+  /* Content max-width for chrome (dashboards, reports, etc.). */
+  --content-measure: 880px;
+
+  /* Surface + text roles. Light is the default; themes override below. */
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+
+  /* Accent: one interactive hue (indigo-violet ink), the hue maximally separated from
+     the semantic tone lanes (red / amber / green) so status color never collides with
+     interaction color, and far enough off blue not to read as a default hyperlink. */
+  --accent: #4a37c8;
+  --accent-solid: #5646d8;
+  --accent-on: #ffffff;
+  --accent-soft: rgba(74, 55, 200, 0.08);
+  --accent-line: rgba(74, 55, 200, 0.26);
+
+  --focus-ring: var(--accent);
+
+  /* Semantic tones. Each: -fg (text/icon), -bg (tint fill), -bd (border). Theme-tuned. */
+  --tone-pos-fg: #1a7a4e;
+  --tone-pos-bg: rgba(26, 122, 78, 0.11);
+  --tone-pos-bd: rgba(26, 122, 78, 0.30);
+  --tone-neg-fg: #c0362c;
+  --tone-neg-bg: rgba(192, 54, 44, 0.11);
+  --tone-neg-bd: rgba(192, 54, 44, 0.30);
+  --tone-warn-fg: #96631a;
+  --tone-warn-bg: rgba(180, 120, 10, 0.14);
+  --tone-warn-bd: rgba(180, 120, 10, 0.32);
+  --tone-info-fg: #2f5bd0;
+  --tone-info-bg: rgba(47, 91, 208, 0.10);
+  --tone-info-bd: rgba(47, 91, 208, 0.28);
+  --tone-hot-fg: #c2410c;
+  --tone-hot-bg: rgba(194, 65, 12, 0.12);
+  --tone-hot-bd: rgba(194, 65, 12, 0.30);
+  --tone-muted-fg: var(--fg-faint);
+  --tone-muted-bg: var(--bg-sunken);
+  --tone-muted-bd: var(--border-strong);
+}
+
+/* Reading controls. */
+:root[data-size="s"]  { --reading-size: 16px; }
+:root[data-size="m"]  { --reading-size: 18px; }
+:root[data-size="l"]  { --reading-size: 19.5px; }
+:root[data-size="xl"] { --reading-size: 21px; }
+
+:root[data-width="narrow"]      { --reading-measure: 56ch; }
+:root[data-width="comfortable"] { --reading-measure: 66ch; }
+:root[data-width="wide"]        { --reading-measure: 76ch; }
+
+:root[data-family="serif"] { --reading-family: var(--font-serif); }
+:root[data-family="sans"]  { --reading-family: var(--font-sans); }
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="sepia"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+/* Dark tokens: applied by OS preference and by explicit data-theme="dark". */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e10;
+    --bg-elev: #17171a;
+    --bg-sunken: #0a0a0c;
+    --fg: #e8e8ee;
+    --fg-muted: #b3b3bb;
+    --fg-faint: #9e9ea6;
+    --border: #26262b;
+    --border-strong: #3a3a40;
+    --code-bg: #1a1a1f;
+    --code-fg: #e8e8ee;
+
+    --accent: #a99bff;
+    --accent-solid: #5648d6;
+    --accent-on: #ffffff;
+    --accent-soft: rgba(169, 155, 255, 0.12);
+    --accent-line: rgba(169, 155, 255, 0.30);
+
+    --tone-pos-fg: #4ecb8b;
+    --tone-pos-bg: rgba(78, 203, 139, 0.14);
+    --tone-pos-bd: rgba(78, 203, 139, 0.30);
+    --tone-neg-fg: #ff6b60;
+    --tone-neg-bg: rgba(255, 107, 96, 0.15);
+    --tone-neg-bd: rgba(255, 107, 96, 0.32);
+    --tone-warn-fg: #e0b24d;
+    --tone-warn-bg: rgba(224, 178, 77, 0.15);
+    --tone-warn-bd: rgba(224, 178, 77, 0.30);
+    --tone-info-fg: #8fa8ff;
+    --tone-info-bg: rgba(143, 168, 255, 0.15);
+    --tone-info-bd: rgba(143, 168, 255, 0.30);
+    --tone-hot-fg: #ff9d5c;
+    --tone-hot-bg: rgba(255, 157, 92, 0.15);
+    --tone-hot-bd: rgba(255, 157, 92, 0.30);
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 8px 28px -8px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #fbfaf6;
+  --bg-elev: #ffffff;
+  --bg-sunken: #f1f0eb;
+  --fg: #15151a;
+  --fg-muted: #555560;
+  --fg-faint: #6f6f78;
+  --border: #e4e2dc;
+  --border-strong: #d0cdc4;
+  --code-bg: #f1efea;
+  --code-fg: #15151a;
+
+  --accent: #4a37c8;
+  --accent-solid: #5646d8;
+  --accent-on: #ffffff;
+  --accent-soft: rgba(74, 55, 200, 0.08);
+  --accent-line: rgba(74, 55, 200, 0.26);
+
+  --tone-pos-fg: #1a7a4e;
+  --tone-pos-bg: rgba(26, 122, 78, 0.11);
+  --tone-pos-bd: rgba(26, 122, 78, 0.30);
+  --tone-neg-fg: #c0362c;
+  --tone-neg-bg: rgba(192, 54, 44, 0.11);
+  --tone-neg-bd: rgba(192, 54, 44, 0.30);
+  --tone-warn-fg: #96631a;
+  --tone-warn-bg: rgba(180, 120, 10, 0.14);
+  --tone-warn-bd: rgba(180, 120, 10, 0.32);
+  --tone-info-fg: #2f5bd0;
+  --tone-info-bg: rgba(47, 91, 208, 0.10);
+  --tone-info-bd: rgba(47, 91, 208, 0.28);
+  --tone-hot-fg: #c2410c;
+  --tone-hot-bg: rgba(194, 65, 12, 0.12);
+  --tone-hot-bd: rgba(194, 65, 12, 0.30);
+
+  --shadow-1: 0 1px 2px rgba(15, 15, 20, 0.05);
+  --shadow-2: 0 6px 24px -8px rgba(15, 15, 20, 0.18);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0e10;
+  --bg-elev: #17171a;
+  --bg-sunken: #0a0a0c;
+  --fg: #e8e8ee;
+  --fg-muted: #b3b3bb;
+  --fg-faint: #9e9ea6;
+  --border: #26262b;
+  --border-strong: #3a3a40;
+  --code-bg: #1a1a1f;
+  --code-fg: #e8e8ee;
+
+  --accent: #a99bff;
+  --accent-solid: #5648d6;
+  --accent-on: #ffffff;
+  --accent-soft: rgba(169, 155, 255, 0.12);
+  --accent-line: rgba(169, 155, 255, 0.30);
+
+  --tone-pos-fg: #4ecb8b;
+  --tone-pos-bg: rgba(78, 203, 139, 0.14);
+  --tone-pos-bd: rgba(78, 203, 139, 0.30);
+  --tone-neg-fg: #ff6b60;
+  --tone-neg-bg: rgba(255, 107, 96, 0.15);
+  --tone-neg-bd: rgba(255, 107, 96, 0.32);
+  --tone-warn-fg: #e0b24d;
+  --tone-warn-bg: rgba(224, 178, 77, 0.15);
+  --tone-warn-bd: rgba(224, 178, 77, 0.30);
+  --tone-info-fg: #8fa8ff;
+  --tone-info-bg: rgba(143, 168, 255, 0.15);
+  --tone-info-bd: rgba(143, 168, 255, 0.30);
+  --tone-hot-fg: #ff9d5c;
+  --tone-hot-bg: rgba(255, 157, 92, 0.15);
+  --tone-hot-bd: rgba(255, 157, 92, 0.30);
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 28px -8px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme="sepia"] {
+  --bg: #f4ecd8;
+  --bg-elev: #faf3e0;
+  --bg-sunken: #ede2c4;
+  --fg: #4a3a22;
+  --fg-muted: #6b573b;
+  --fg-faint: #86714f;
+  --border: #d9c8a3;
+  --border-strong: #c2ad7f;
+  --code-bg: #ebdfc2;
+  --code-fg: #4a3a22;
+
+  --accent: #4a3a86;
+  --accent-solid: #493c86;
+  --accent-on: #faf3e0;
+  --accent-soft: rgba(74, 58, 134, 0.09);
+  --accent-line: rgba(74, 58, 134, 0.26);
+
+  --tone-pos-fg: #3d6b1e;
+  --tone-pos-bg: rgba(61, 107, 30, 0.12);
+  --tone-pos-bd: rgba(61, 107, 30, 0.32);
+  --tone-neg-fg: #9e3b26;
+  --tone-neg-bg: rgba(158, 59, 38, 0.12);
+  --tone-neg-bd: rgba(158, 59, 38, 0.32);
+  --tone-warn-fg: #8a5a12;
+  --tone-warn-bg: rgba(138, 90, 18, 0.14);
+  --tone-warn-bd: rgba(138, 90, 18, 0.32);
+  --tone-info-fg: #33417f;
+  --tone-info-bg: rgba(51, 65, 127, 0.10);
+  --tone-info-bd: rgba(51, 65, 127, 0.26);
+  --tone-hot-fg: #a24a1a;
+  --tone-hot-bg: rgba(162, 74, 26, 0.12);
+  --tone-hot-bd: rgba(162, 74, 26, 0.30);
+
+  --shadow-1: 0 1px 2px rgba(74, 58, 34, 0.08);
+  --shadow-2: 0 6px 24px -8px rgba(74, 58, 34, 0.22);
+}
+
+/* to-html design system, layer 2: primitives. Resets, element styles, focus, print,
+   and the shared component vocabulary (eyebrow label, tone pill) that every kind
+   consumes. Reads only from tokens.css; defines no raw color or bare spacing value. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: var(--reading-size);
+  line-height: var(--reading-leading);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern", "liga";
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: var(--border-hair) solid var(--accent-line);
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+a:hover { border-bottom-color: var(--accent); }
+
+:focus-visible {
+  outline: var(--border-strong-w) solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  font-variant-ligatures: none;
+  background: var(--code-bg);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+}
+
+pre {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border: var(--border-hair) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4) var(--sp-5);
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: var(--leading-normal);
+}
+pre code { background: transparent; padding: 0; font-size: inherit; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.2em 0;
+  font-size: var(--text-base);
+}
+th, td {
+  text-align: start;
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--border-hair) solid var(--border);
+}
+th {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+}
+
+hr {
+  border: none;
+  height: var(--border-hair);
+  background: var(--border);
+  margin: 2.4em 0;
+}
+
+blockquote {
+  margin: 1.2em 0;
+  padding-block: var(--sp-1);
+  padding-inline: var(--sp-5) 0;
+  border-inline-start: var(--border-strong-w) solid var(--accent-line);
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+/* The instrument voice: a mono, tracked, uppercase micro-label. Every kind stamps
+   its name with one, which is a load-bearing part of the shared identity. */
+.cc-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+/* Tone pill: one geometry, five semantic tones sourced from theme tokens. Dashboard
+   statuses and findings severities both render as pills, so a status never invents
+   a color and contrast is guaranteed by the token layer. */
+.cc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  border: var(--border-hair) solid transparent;
+  white-space: nowrap;
+}
+.cc-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+  flex: none;
+}
+.cc-pill.is-plain::before { display: none; }
+
+.tone-pos    { color: var(--tone-pos-fg);  background: var(--tone-pos-bg);  border-color: var(--tone-pos-bd); }
+.tone-neg    { color: var(--tone-neg-fg);  background: var(--tone-neg-bg);  border-color: var(--tone-neg-bd); }
+.tone-warn   { color: var(--tone-warn-fg); background: var(--tone-warn-bg); border-color: var(--tone-warn-bd); }
+.tone-hot    { color: var(--tone-hot-fg);  background: var(--tone-hot-bg);  border-color: var(--tone-hot-bd); }
+.tone-info   { color: var(--tone-info-fg); background: var(--tone-info-bg); border-color: var(--tone-info-bd); }
+.tone-muted  { color: var(--tone-muted-fg); background: var(--tone-muted-bg); border-color: var(--tone-muted-bd); }
+.tone-accent { color: var(--accent);       background: var(--accent-soft);  border-color: var(--accent-line); }
+
+/* Diagram wrapper (the SVG map centers within this column). */
+.cc-map {
+  max-width: calc(var(--reading-measure) + 80px);
+  margin: var(--sp-5) auto 0;
+}
+
+.cc-stamp {
+  position: fixed;
+  inset-block-end: var(--sp-3);
+  inset-inline-start: var(--sp-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--fg-faint);
+  letter-spacing: 0.04em;
+  z-index: 10;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+@media print {
+  html, body { background: #fff; color: #000; }
+  .cc-stamp { display: none; }
+  a { color: #000; }
+  * { box-shadow: none !important; }
+  @page { margin: 16mm; }
+}
+
+.tpl-checklist {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--reading-family);
+  font-size: var(--reading-size);
+  line-height: var(--reading-leading);
+}
+.cc-ck {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: var(--sp-7) var(--sp-5) var(--sp-9);
+}
+.cc-ck-header {
+  padding-bottom: var(--sp-5);
+  border-bottom: var(--border-hair) solid var(--border);
+  margin-bottom: var(--sp-6);
+}
+.cc-ck-kind { margin: 0 0 var(--sp-3); }
+.cc-ck-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+  margin: 0;
+}
+.cc-ck-sub { color: var(--fg-muted); margin: var(--sp-2) 0 0; font-size: var(--text-lg); }
+.cc-ck-meta { color: var(--fg-faint); margin: var(--sp-3) 0 0; font-size: var(--text-xs); font-family: var(--font-mono); }
+.cc-ck-note { color: var(--fg-faint); margin: var(--sp-3) 0 0; font-size: var(--text-xs); }
+.cc-ck-group { margin-top: var(--sp-6); }
+.cc-ck-group:first-of-type { margin-top: 0; }
+.cc-ck-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--border-hair) solid var(--border);
+}
+.cc-ck-h {
+  font-family: var(--font-sans);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.cc-ck-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cc-ck-group.is-complete .cc-ck-count { color: var(--tone-pos-fg); }
+.cc-ck-summary { color: var(--fg-muted); margin-bottom: var(--sp-3); font-size: var(--text-base); }
+.cc-ck-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.cc-ck-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--sp-3);
+  align-items: start;
+  background: var(--bg-elev);
+  border: var(--border-hair) solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3) var(--sp-4);
+  box-shadow: var(--shadow-1);
+  transition: border-color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
+}
+.cc-ck-item.is-checked { background: var(--bg-sunken); }
+.cc-ck-box {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--accent-solid);
+  cursor: pointer;
+  grid-row: 1;
+  grid-column: 1;
+}
+.cc-ck-text {
+  grid-row: 1;
+  grid-column: 2;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.cc-ck-item.is-checked .cc-ck-text { color: var(--fg-faint); text-decoration: line-through; }
+.cc-ck-detail {
+  grid-row: 2;
+  grid-column: 2;
+  color: var(--fg-muted);
+  font-size: var(--text-base);
+  margin-top: var(--sp-1);
+  overflow-wrap: anywhere;
+}
+.cc-ck-detail > :first-child { margin-top: 0; }
+.cc-ck-detail > :last-child { margin-bottom: 0; }
+.cc-ck-links { grid-row: 3; grid-column: 2; display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-2); }
+.cc-ck-link { color: var(--accent); font-size: var(--text-sm); border-bottom: var(--border-hair) solid var(--accent-line); }
+.cc-ck-link:hover { border-bottom-color: var(--accent); }
+@media (max-width: 540px) {
+  .cc-ck { padding: var(--sp-5) var(--sp-4) var(--sp-8); }
+  .cc-ck-h1 { font-size: var(--text-xl); }
+}
+</style>
+</head>
+<body class="tpl-checklist">
+
+
+
+<div class="cc-ck"><header class="cc-ck-header"><p class="cc-eyebrow cc-ck-kind">Checklist</p><h1 class="cc-ck-h1">Ship checklist</h1><p class="cc-ck-sub">Checked state is saved in your browser only.</p><p class="cc-ck-note">Checked state is saved in this browser only.</p></header><section class="cc-ck-group" data-ck-total="3"><div class="cc-ck-group-head"><h2 class="cc-ck-h">Before publish</h2><span class="cc-ck-count" data-ck-count>0 / 3</span></div><div class="cc-ck-summary"><p>Run these once before tagging a release.</p>
+</div><ul class="cc-ck-items"><li class="cc-ck-item"><input type="checkbox" id="cc-ck-0-0" class="cc-ck-box"><label for="cc-ck-0-0" class="cc-ck-text">Tests pass</label><div class="cc-ck-detail"><p>node --test across every workspace.</p>
+</div></li><li class="cc-ck-item"><input type="checkbox" id="cc-ck-0-1" class="cc-ck-box"><label for="cc-ck-0-1" class="cc-ck-text">Lint clean</label><div class="cc-ck-detail"><p>Zero warnings.</p>
+</div></li><li class="cc-ck-item"><input type="checkbox" id="cc-ck-0-2" class="cc-ck-box"><label for="cc-ck-0-2" class="cc-ck-text">Synced adapter copies match source</label></li></ul></section><section class="cc-ck-group" data-ck-total="2"><div class="cc-ck-group-head"><h2 class="cc-ck-h">After publish</h2><span class="cc-ck-count" data-ck-count>0 / 2</span></div><ul class="cc-ck-items"><li class="cc-ck-item"><input type="checkbox" id="cc-ck-1-0" class="cc-ck-box"><label for="cc-ck-1-0" class="cc-ck-text">Marketplace entry installs</label><div class="cc-ck-detail"><p>/plugin marketplace add ibrahemid/to-html</p>
+</div></li><li class="cc-ck-item"><input type="checkbox" id="cc-ck-1-1" class="cc-ck-box"><label for="cc-ck-1-1" class="cc-ck-text">CHANGELOG updated</label><div class="cc-ck-links"><a class="cc-ck-link" href="https://github.com/ibrahemid/to-html/blob/main/adapters/claude-code/CHANGELOG.md" rel="noopener noreferrer">CHANGELOG</a></div></li></ul></section></div>
+
+
+
+<script>(function () {
+  'use strict';
+
+  var PREFIX = 'cc-checklist:' + (location.pathname || '') + ':';
+
+  function store(box) {
+    try {
+      if (box.checked) localStorage.setItem(PREFIX + box.id, '1');
+      else localStorage.removeItem(PREFIX + box.id);
+    } catch (_e) { /* localStorage may be unavailable from file:// */ }
+  }
+
+  function load(box) {
+    try { return localStorage.getItem(PREFIX + box.id) === '1'; } catch (_e) { return false; }
+  }
+
+  function updateGroup(group) {
+    var boxes = group.querySelectorAll('.cc-ck-box');
+    var done = 0;
+    for (var i = 0; i < boxes.length; i++) if (boxes[i].checked) done++;
+    var count = group.querySelector('[data-ck-count]');
+    if (count) count.textContent = done + ' / ' + boxes.length;
+    group.classList.toggle('is-complete', boxes.length > 0 && done === boxes.length);
+  }
+
+  function init() {
+    var boxes = document.querySelectorAll('.cc-ck-box');
+    for (var i = 0; i < boxes.length; i++) {
+      if (load(boxes[i])) boxes[i].checked = true;
+      var item = boxes[i].closest('.cc-ck-item');
+      if (item) item.classList.toggle('is-checked', boxes[i].checked);
+    }
+    var groups = document.querySelectorAll('.cc-ck-group');
+    for (var g = 0; g < groups.length; g++) updateGroup(groups[g]);
+  }
+
+  document.addEventListener('change', function (event) {
+    var box = event.target;
+    if (!box.classList || !box.classList.contains('cc-ck-box')) return;
+    store(box);
+    var item = box.closest('.cc-ck-item');
+    if (item) item.classList.toggle('is-checked', box.checked);
+    var group = box.closest('.cc-ck-group');
+    if (group) updateGroup(group);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

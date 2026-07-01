@@ -7,6 +7,9 @@ module.exports = [
     ignores: [
       'node_modules/**',
       '**/node_modules/**',
+      '.scratch/**',
+      '.plans/**',
+      '.tmp/**',
       'adapters/claude-code/core/**',
       'adapters/claude-code/shared/**',
       'core/vendor/**',
@@ -48,6 +51,18 @@ module.exports = [
       'no-throw-literal': 'error',
       'no-self-assign': 'error',
       'no-unreachable': 'error'
+    }
+  },
+  {
+    files: ['**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        URL: 'readonly'
+      }
     }
   },
   {

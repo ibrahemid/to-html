@@ -14,6 +14,13 @@ const STATUS_LABELS = {
   decision: 'Needs you'
 };
 const ROLLUP_ORDER = ['decision', 'blocked', 'in_progress', 'pending', 'done'];
+const STATUS_TONE = {
+  done: 'tone-pos',
+  in_progress: 'tone-accent',
+  pending: 'tone-muted',
+  blocked: 'tone-neg',
+  decision: 'tone-warn'
+};
 
 function normalizeItem(item, ctx) {
   if (!item || typeof item !== 'object') throw new ArtifactSpecError(`${ctx} must be an object`);
@@ -50,7 +57,8 @@ function validate(spec) {
 function renderBadge(status) {
   if (!status) return '';
   const label = STATUS_LABELS[status] || status;
-  return `<span class="cc-status cc-status-${escapeAttr(status)}">${escapeHtml(label)}</span>`;
+  const tone = STATUS_TONE[status] || 'tone-muted';
+  return `<span class="cc-status cc-pill ${tone} cc-status-${escapeAttr(status)}">${escapeHtml(label)}</span>`;
 }
 
 function renderLinks(links) {
@@ -69,7 +77,7 @@ function renderCopy(copyPrompt) {
 function renderItem(item) {
   const statusAttr = item.status ? ` data-status="${escapeAttr(item.status)}"` : '';
   const detail = item.detail ? `<div class="cc-item-detail">${renderMarkdown(item.detail)}</div>` : '';
-  return `<li class="cc-dash-item"${statusAttr}>${renderBadge(item.status)}<div class="cc-item-body"><p class="cc-item-label">${escapeHtml(item.label)}</p>${detail}${renderLinks(item.links)}${renderCopy(item.copyPrompt)}</div></li>`;
+  return `<li class="cc-dash-item"${statusAttr}><div class="cc-item-body"><div class="cc-item-head">${renderBadge(item.status)}<p class="cc-item-label">${escapeHtml(item.label)}</p></div>${detail}${renderLinks(item.links)}${renderCopy(item.copyPrompt)}</div></li>`;
 }
 
 function renderSection(section) {
@@ -89,7 +97,7 @@ function renderRollup(sections) {
   }
   const chips = ROLLUP_ORDER
     .filter((k) => counts[k])
-    .map((k) => `<span class="cc-roll cc-status-${k}">${counts[k]} ${escapeHtml(STATUS_LABELS[k])}</span>`)
+    .map((k) => `<span class="cc-roll cc-pill ${STATUS_TONE[k] || 'tone-muted'}">${counts[k]} ${escapeHtml(STATUS_LABELS[k])}</span>`)
     .join('');
   return chips ? `<div class="cc-dash-rollup">${chips}</div>` : '';
 }
@@ -103,7 +111,7 @@ function renderHeader(spec) {
     }
   }
   const meta = metaBits.length ? `<p class="cc-dash-meta">${metaBits.join(' · ')}</p>` : '';
-  return `<header class="cc-dash-header"><h1 class="cc-dash-title">${escapeHtml(spec.title)}</h1>${subtitle}${meta}${renderRollup(spec.sections)}</header>`;
+  return `<header class="cc-dash-header"><p class="cc-eyebrow cc-dash-kind">Dashboard</p><h1 class="cc-dash-title">${escapeHtml(spec.title)}</h1>${subtitle}${meta}${renderRollup(spec.sections)}</header>`;
 }
 
 function render(spec) {
